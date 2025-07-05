@@ -38,5 +38,5 @@ jobs:
             --image asia-southeast1-docker.pkg.dev/lumaai-12b32/luma-backend-docker-repo/my-app:$GITHUB_SHA \
             --platform managed \
             --region asia-southeast1 \
-            --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com
+            --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com \
             --allow-unauthenticated
