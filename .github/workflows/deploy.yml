@@ -30,7 +30,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy lumaai-backend \
-            --image asia-southeast1-docker.pkg.dev/lumaai-12b32luma-backend-docker-repo/my-app:$GITHUB_SHA \
+            --image asia-southeast1-docker.pkg.dev/lumaai-12b32/luma-backend-docker-repo/my-app:$GITHUB_SHA \
             --platform managed \
             --region asia-southeast1 \
             --allow-unauthenticated
