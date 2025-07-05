@@ -1,5 +1,5 @@
 # Base image with JDK 17
-FROM eclipse-temurin:17-jdk-jammy AS builder
+FROM eclipse-temurin:23-jdk-jammy AS builder
 
 # Set working dir
 WORKDIR /app
