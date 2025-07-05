@@ -16,7 +16,6 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: lumaai-12b32
 
       - name: Authenticate to Google Cloud
@@ -38,5 +37,5 @@ jobs:
             --image asia-southeast1-docker.pkg.dev/lumaai-12b32/luma-backend-docker-repo/my-app:$GITHUB_SHA \
             --platform managed \
             --region asia-southeast1 \
-            --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com
+            --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com \
             --allow-unauthenticated
