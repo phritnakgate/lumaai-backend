@@ -14,8 +14,19 @@ import java.util.Objects;
 @Configuration
 @Profile("local")
 public class FirebaseLocalConfig {
+    public void loadEnv() {
+        try {
+            Dotenv dotenv = Dotenv.load();
+            System.setProperty("firebase.api-key", Objects.requireNonNull(dotenv.get("FIREBASE_API_KEY")));
+            System.setProperty("firebase.database-url", Objects.requireNonNull(dotenv.get("FIREBASE_DATABASE_URL")));
+        } catch (Exception e) {
+            System.err.println("Could not load .env");
+        }
+    }
+
     @PostConstruct
     public void init() {
+        loadEnv();
         try {
             InputStream serviceAccount = getClass()
                     .getClassLoader()
@@ -24,6 +35,7 @@ public class FirebaseLocalConfig {
             assert serviceAccount != null;
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setDatabaseUrl(System.getProperty("firebase.database-url"))
                     .build();
 
             if (FirebaseApp.getApps().isEmpty()) {
@@ -35,13 +47,4 @@ public class FirebaseLocalConfig {
         }
     }
 
-    @PostConstruct
-    public void loadEnv() {
-        try {
-            Dotenv dotenv = Dotenv.load();
-            System.setProperty("firebase.api-key", Objects.requireNonNull(dotenv.get("FIREBASE_API_KEY")));
-        } catch (Exception e) {
-            System.err.println("Could not load .env");
-        }
-    }
 }
