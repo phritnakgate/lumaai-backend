@@ -38,4 +38,5 @@ jobs:
             --platform managed \
             --region asia-southeast1 \
             --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars SPRING_PROFILES_ACTIVE=prod
