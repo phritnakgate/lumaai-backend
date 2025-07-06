@@ -43,4 +43,5 @@ jobs:
             --region asia-southeast1 \
             --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com \
             --allow-unauthenticated \
-            --set-env-vars SPRING_PROFILES_ACTIVE=prod,DATABASE_URL=${{ steps.get_db_url.outputs.DATABASE_URL }}
+            --set-env-vars SPRING_PROFILES_ACTIVE=prod \
+            --set-env-vars DATABASE_URL=${{ steps.get_db_url.outputs.DATABASE_URL }}
