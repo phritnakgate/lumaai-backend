@@ -23,6 +23,10 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
+      - name: Access Firebase Database URL secret
+        id: get_db_url
+        run: echo "::set-output name=DATABASE_URL::$(gcloud secrets versions access latest --secret=DATABASE_URL)"
+
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
@@ -39,4 +43,4 @@ jobs:
             --region asia-southeast1 \
             --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com \
             --allow-unauthenticated \
-            --set-env-vars SPRING_PROFILES_ACTIVE=prod
+            --set-env-vars SPRING_PROFILES_ACTIVE=prod,DATABASE_URL=${{ steps.get_db_url.outputs.DATABASE_URL }}

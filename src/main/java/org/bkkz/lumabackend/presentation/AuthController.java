@@ -28,7 +28,7 @@ public class AuthController {
                    "id",userRecord.getUid(),
                    "email", userRecord.getEmail(),
                    "displayName", userRecord.getDisplayName()
-           ));
+           )).get();
 
            return ResponseEntity.ok(Map.of(
                    "message", "User registered successfully"
