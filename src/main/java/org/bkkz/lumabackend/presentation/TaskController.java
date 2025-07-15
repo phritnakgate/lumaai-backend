@@ -93,4 +93,48 @@ public class TaskController {
         }
 
     }
+
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<?> deleteTask(@PathVariable String taskId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        DatabaseReference taskRef = FirebaseDatabase.getInstance()
+                .getReference("tasks")
+                .child(taskId);
+
+        CompletableFuture<ResponseEntity<?>> future = new CompletableFuture<>();
+
+        taskRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    future.complete(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Map.of("error", "Task not found")));
+                    return;
+                }
+
+                String ownerId = snapshot.child("userId").getValue(String.class);
+                if (!userId.equals(ownerId)) {
+                    future.complete(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "You do not have permission to delete this task")));
+                    return;
+                }
+
+                taskRef.removeValueAsync();
+                future.complete(ResponseEntity.ok(Map.of("message", "Task deleted successfully")));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.complete(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", error.getMessage())));
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }
