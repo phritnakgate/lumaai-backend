@@ -137,4 +137,52 @@ public class TaskController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @PatchMapping("/{taskId}")
+    public ResponseEntity<?> updateTask(
+            @PathVariable String taskId,
+            @RequestBody Map<String, Object> updates
+    ) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        DatabaseReference taskRef = FirebaseDatabase.getInstance()
+                .getReference("tasks")
+                .child(taskId);
+
+        CompletableFuture<ResponseEntity<?>> future = new CompletableFuture<>();
+
+        taskRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    future.complete(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Map.of("error", "Task not found")));
+                    return;
+                }
+
+                String ownerId = snapshot.child("userId").getValue(String.class);
+                if (!userId.equals(ownerId)) {
+                    future.complete(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "You do not have permission to update this task")));
+                    return;
+                }
+
+                taskRef.updateChildrenAsync(updates);
+                future.complete(ResponseEntity.ok(Map.of("message", "Task updated successfully")));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.complete(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", error.getMessage())));
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
