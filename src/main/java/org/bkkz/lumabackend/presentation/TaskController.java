@@ -1,10 +1,188 @@
 package org.bkkz.lumabackend.presentation;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.google.firebase.database.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import org.bkkz.lumabackend.model.Task;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @RestController
+@SecurityRequirement(name = "bearerAuth")
 @RequestMapping("/api/task")
 public class TaskController {
+    @PostMapping(value = "/create-task")
+    public ResponseEntity<?> createTask(@Valid @RequestBody Task task, BindingResult bindingResult) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        task.setUserId(userId);
+
+        if (bindingResult.hasErrors()) {
+            List<String> errors = bindingResult.getFieldErrors().stream()
+                    .map(e -> e.getField() + " " + e.getDefaultMessage())
+                    .toList();
+            return ResponseEntity.badRequest().body(Map.of("errors", errors));
+        }
+        try {
+            DatabaseReference reference = FirebaseDatabase.getInstance()
+                    .getReference("tasks")
+                    .push();
+
+            reference.setValueAsync(Map.of(
+                    "userId", task.getUserId(),
+                    "name", task.getName(),
+                    "description", task.getDescription() != null ? task.getDescription() : "",
+                    "dueDate", task.getDueDate() != null ? task.getDueDate() : "",
+                    "dueTime", task.getDueTime() != null ? task.getDueTime() : "",
+                    "isFinished", task.getIsFinished()
+            ));
+            return ResponseEntity.ok(Map.of(
+                    "message", "Task Created successfully!",
+                    "taskId", reference.getKey()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
+    @GetMapping(value = "my-tasks")
+    public ResponseEntity<?> getMyTasks() {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        DatabaseReference reference = FirebaseDatabase.getInstance()
+                .getReference("tasks");
+
+        Query query = reference.orderByChild("userId").equalTo(userId);
+
+        CompletableFuture<ResponseEntity<?>> future = new CompletableFuture<>();
+
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Map<String, Object>> tasks = new ArrayList<>();
+
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    Map<String, Object> taskData = (Map<String, Object>) child.getValue();
+                    taskData.put("id", child.getKey());
+                    tasks.add(taskData);
+                }
+
+                future.complete(ResponseEntity.ok(tasks));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                future.complete(ResponseEntity
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", databaseError.getMessage())));
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+
+    }
+
+    @DeleteMapping("/{taskId}")
+    public ResponseEntity<?> deleteTask(@PathVariable String taskId) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        DatabaseReference taskRef = FirebaseDatabase.getInstance()
+                .getReference("tasks")
+                .child(taskId);
+
+        CompletableFuture<ResponseEntity<?>> future = new CompletableFuture<>();
+
+        taskRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    future.complete(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Map.of("error", "Task not found")));
+                    return;
+                }
+
+                String ownerId = snapshot.child("userId").getValue(String.class);
+                if (!userId.equals(ownerId)) {
+                    future.complete(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "You do not have permission to delete this task")));
+                    return;
+                }
+
+                taskRef.removeValueAsync();
+                future.complete(ResponseEntity.ok(Map.of("message", "Task deleted successfully")));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.complete(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", error.getMessage())));
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{taskId}")
+    public ResponseEntity<?> updateTask(
+            @PathVariable String taskId,
+            @RequestBody Map<String, Object> updates
+    ) {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        DatabaseReference taskRef = FirebaseDatabase.getInstance()
+                .getReference("tasks")
+                .child(taskId);
+
+        CompletableFuture<ResponseEntity<?>> future = new CompletableFuture<>();
+
+        taskRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (!snapshot.exists()) {
+                    future.complete(ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Map.of("error", "Task not found")));
+                    return;
+                }
+
+                String ownerId = snapshot.child("userId").getValue(String.class);
+                if (!userId.equals(ownerId)) {
+                    future.complete(ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("error", "You do not have permission to update this task")));
+                    return;
+                }
+
+                taskRef.updateChildrenAsync(updates);
+                future.complete(ResponseEntity.ok(Map.of("message", "Task updated successfully")));
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.complete(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Map.of("error", error.getMessage())));
+            }
+        });
+
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 
 }
