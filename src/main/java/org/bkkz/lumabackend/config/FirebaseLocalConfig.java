@@ -30,7 +30,7 @@ public class FirebaseLocalConfig {
         try {
             InputStream serviceAccount = getClass()
                     .getClassLoader()
-                    .getResourceAsStream("firebase/firebase-adminsdk.json");
+                    .getResourceAsStream("firebase-adminsdk.json");
 
             assert serviceAccount != null;
             FirebaseOptions options = FirebaseOptions.builder()
