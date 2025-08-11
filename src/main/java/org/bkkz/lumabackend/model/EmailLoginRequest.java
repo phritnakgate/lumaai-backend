@@ -1,6 +1,9 @@
 package org.bkkz.lumabackend.model;
 
-public class Login {
+import jakarta.validation.constraints.Email;
+
+public class EmailLoginRequest {
+    @Email
     private String email;
     private String password;
 
