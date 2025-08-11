@@ -9,7 +9,7 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 
 @Configuration
-@Profile("!prod")
+//@Profile("!prod") // Uncomment this line to disable Swagger in real production
 public class SwaggerConfig {
     @Bean
     public OpenAPI openAPI() {
