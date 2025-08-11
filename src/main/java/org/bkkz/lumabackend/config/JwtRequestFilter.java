@@ -42,8 +42,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         if (uid != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            if (jwtUtil.validateToken(jwt)) {
-                // ถ้า Token ถูกต้อง, สร้าง Authentication object และตั้งค่าใน SecurityContext
+            if (jwtUtil.validateToken(jwt, uid)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         uid, null, new ArrayList<>());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

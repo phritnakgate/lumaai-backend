@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @Component
@@ -20,6 +21,8 @@ public class JwtUtil {
     private String accessTokenSecret;
     @Value("${jwt.access-token.expiration.ms}")
     private long accessTokenExpirationMs;
+    @Value("${jwt.refresh-token.expiration.days}")
+    private long refreshTokenExpirationDays;
 
     private SecretKey key;
 
@@ -36,6 +39,15 @@ public class JwtUtil {
                 .subject(uid)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpirationMs))
+                .signWith(key)
+                .compact();
+    }
+
+    public String generateRefreshToken(String uid) {
+        return Jwts.builder()
+                .subject(uid)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(refreshTokenExpirationDays)))
                 .signWith(key)
                 .compact();
     }
@@ -79,8 +91,8 @@ public class JwtUtil {
         }
     }
 
-    public Boolean validateToken(String token) {
-        final String uid = extractUid(token);
-        return (uid != null && !isTokenExpired(token));
+    public Boolean validateToken(String token, String uid) {
+        final String extractedUid = extractUid(token);
+        return (extractedUid.equals(uid) && !isTokenExpired(token));
     }
 }

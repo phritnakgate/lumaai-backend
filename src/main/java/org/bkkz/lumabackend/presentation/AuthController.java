@@ -1,24 +1,17 @@
 package org.bkkz.lumabackend.presentation;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.validation.Valid;
 import org.bkkz.lumabackend.model.EmailLoginRequest;
 import org.bkkz.lumabackend.model.GoogleLoginRequest;
+import org.bkkz.lumabackend.model.RefreshTokenRequest;
 import org.bkkz.lumabackend.model.Register;
 import org.bkkz.lumabackend.security.JwtUtil;
 import org.bkkz.lumabackend.service.AuthService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.google.firebase.auth.*;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +43,7 @@ public class AuthController {
     @PostMapping("/login-email")
     public ResponseEntity<?> authenticateWithEmail(@RequestBody EmailLoginRequest emailLoginRequest){
         try{
-            String jwtToken = authService.loginWithEmail(emailLoginRequest.getEmail(), emailLoginRequest.getPassword());
+            String jwtToken = authService.loginWithEmail(emailLoginRequest.getEmail(), emailLoginRequest.getPassword()).getAccessToken();
             Map<String, String> response = new HashMap<>();
             response.put("jwt", jwtToken);
             response.put("result", "Authentication successful");
@@ -65,7 +58,7 @@ public class AuthController {
     @PostMapping("/login-google")
     public ResponseEntity<?> authenticateWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
         try {
-            String jwtToken = authService.verifyGoogleIdTokenAndCreateSession(request.getIdToken());
+            String jwtToken = authService.verifyGoogleIdTokenAndCreateSession(request.getIdToken()).getAccessToken();
             Map<String, String> response = new HashMap<>();
             response.put("jwt", jwtToken);
             response.put("result", "Authentication successful");
@@ -74,6 +67,16 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Google ID Token: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An internal error occurred.");
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
+        try {
+            String newAccessToken = authService.refreshAccessToken(refreshTokenRequest.getRefreshToken());
+            return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
         }
     }
 
