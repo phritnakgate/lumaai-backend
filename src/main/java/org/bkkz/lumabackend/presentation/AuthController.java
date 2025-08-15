@@ -1,13 +1,11 @@
 package org.bkkz.lumabackend.presentation;
 
-import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.validation.Valid;
-import org.bkkz.lumabackend.model.EmailLoginRequest;
-import org.bkkz.lumabackend.model.GoogleLoginRequest;
-import org.bkkz.lumabackend.model.RefreshTokenRequest;
-import org.bkkz.lumabackend.model.Register;
+import org.bkkz.lumabackend.model.*;
 import org.bkkz.lumabackend.security.JwtUtil;
 import org.bkkz.lumabackend.service.AuthService;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +23,18 @@ public class AuthController {
         this.authService = authService;
         this.jwtUtil = jwtUtil;
     }
+    @Value("${jwt.access-token.expiration.ms}")
+    private long accessTokenExpirationMs;
 
-
+    @NotNull
+    private ResponseEntity<?> getOkResponseEntity(AuthResponse newToken) {
+        Map<String, String> response = new HashMap<>();
+        response.put("access_token", newToken.getAccessToken());
+        response.put("token_type", "Bearer");
+        response.put("expires_in", accessTokenExpirationMs / 1000 + "");
+        response.put("refresh_token", newToken.getRefreshToken());
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Register register) {
@@ -43,40 +51,33 @@ public class AuthController {
     @PostMapping("/login-email")
     public ResponseEntity<?> authenticateWithEmail(@RequestBody EmailLoginRequest emailLoginRequest){
         try{
-            String jwtToken = authService.loginWithEmail(emailLoginRequest.getEmail(), emailLoginRequest.getPassword()).getAccessToken();
-            Map<String, String> response = new HashMap<>();
-            response.put("jwt", jwtToken);
-            response.put("result", "Authentication successful");
-            return ResponseEntity.ok(response);
-        } catch (FirebaseAuthException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password: " + e.getMessage());
+            AuthResponse jwtToken = authService.loginWithEmail(emailLoginRequest.getEmail(), emailLoginRequest.getPassword());
+            return getOkResponseEntity(jwtToken);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An internal error occurred | " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", "invalid_request"));
         }
     }
 
     @PostMapping("/login-google")
     public ResponseEntity<?> authenticateWithGoogle(@Valid @RequestBody GoogleLoginRequest request) {
         try {
-            String jwtToken = authService.verifyGoogleIdTokenAndCreateSession(request.getIdToken()).getAccessToken();
-            Map<String, String> response = new HashMap<>();
-            response.put("jwt", jwtToken);
-            response.put("result", "Authentication successful");
-            return ResponseEntity.ok(response);
-        } catch (FirebaseAuthException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Google ID Token: " + e.getMessage());
+            AuthResponse jwtToken = authService.verifyGoogleIdTokenAndCreateSession(request.getIdToken());
+            return getOkResponseEntity(jwtToken);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An internal error occurred.");
+            return ResponseEntity.badRequest().body(Map.of("error", "invalid_request"));
         }
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
         try {
-            String newAccessToken = authService.refreshAccessToken(refreshTokenRequest.getRefreshToken());
-            return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
+            AuthResponse newToken = authService.refreshAccessToken(refreshTokenRequest.getRefreshToken());
+            return getOkResponseEntity(newToken);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", e.getMessage()));
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "invalid_grant");
+            errorResponse.put("error_description", "The refresh token is invalid or expired.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
 

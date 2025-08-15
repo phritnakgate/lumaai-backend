@@ -76,7 +76,6 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (JwtException e) {
-            // จัดการข้อผิดพลาดของ JWT เช่น ExpiredJwtException, SignatureException
             System.err.println("Invalid JWT: " + e.getMessage());
             return null;
         }
