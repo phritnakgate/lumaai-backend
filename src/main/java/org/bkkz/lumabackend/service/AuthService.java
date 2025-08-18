@@ -8,18 +8,22 @@ import com.google.firebase.auth.UserRecord;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import org.bkkz.lumabackend.model.AuthResponse;
+import org.bkkz.lumabackend.model.PkceDetails;
 import org.bkkz.lumabackend.model.Register;
 import org.bkkz.lumabackend.security.JwtUtil;
+import org.bkkz.lumabackend.security.PkceUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Nullable;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthService {
@@ -29,6 +33,8 @@ public class AuthService {
 
     private final JwtUtil jwtUtil;
 
+    private final Map<String, PkceDetails> authCodes = new ConcurrentHashMap<>();
+
     public AuthService(JwtUtil jwtUtil, ObjectMapper objectMapper) {
         this.jwtUtil = jwtUtil;
         this.objectMapper = objectMapper;
@@ -36,7 +42,41 @@ public class AuthService {
 
     HttpClient client = HttpClient.newHttpClient();
 
-    public AuthResponse loginWithEmail(String email, String password) throws Exception {
+    private String generateAuthorizationCode(String uid, String email, String codeChallenge, String codeChallengeMethod) {
+        String code = UUID.randomUUID().toString();
+        PkceDetails details = new PkceDetails(uid, email, codeChallenge, codeChallengeMethod, System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5));
+        authCodes.put(code, details);
+        System.out.println("Generated Authorization Code: " + authCodes);
+        return code;
+    }
+
+    public AuthResponse exchangeCodeForToken(String code, String codeVerifier) throws Exception {
+        PkceDetails details = authCodes.get(code);
+
+        if (details == null) {
+            throw new RuntimeException("Invalid or expired authorization code.");
+        }
+
+        // Remove the code immediately to prevent reuse (single-use)
+        authCodes.remove(code);
+
+        if (System.currentTimeMillis() > details.getExpiryTime()) {
+            throw new RuntimeException("Authorization code has expired.");
+        }
+
+        // Verify the PKCE code challenge
+        if (!PkceUtil.verifyCodeChallenge(codeVerifier, details.getCodeChallenge(), details.getCodeChallengeMethod())) {
+            throw new RuntimeException("Invalid code_verifier.");
+        }
+
+        // PKCE verification successful, generate tokens
+        String accessToken = jwtUtil.generateAccessToken(details.getUid(), details.getEmail());
+        String refreshToken = jwtUtil.generateRefreshToken(details.getUid());
+
+        return new AuthResponse(accessToken, refreshToken);
+    }
+
+    public String loginWithEmail(String email, String password, String codeChallenge, String codeChallengeMethod) throws Exception {
         String authUrl = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + firebaseApiKey;
         try{
             String body = """
@@ -58,10 +98,7 @@ public class AuthService {
                 String idToken = firebaseResponse.get("idToken");
                 FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
-                String accessToken = jwtUtil.generateAccessToken(decodedToken.getUid(), decodedToken.getEmail());
-                String refreshToken = jwtUtil.generateRefreshToken(decodedToken.getUid());
-
-                return new AuthResponse(accessToken, refreshToken);
+                return generateAuthorizationCode(decodedToken.getUid(), decodedToken.getEmail(), codeChallenge, codeChallengeMethod);
             }else{
                 throw new RuntimeException("Login Failed! Invalid credentials.");
             }

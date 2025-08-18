@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -50,11 +51,50 @@ public class AuthController {
 
     @PostMapping("/login-email")
     public ResponseEntity<?> authenticateWithEmail(@RequestBody EmailLoginRequest emailLoginRequest){
+        if (!StringUtils.hasText(emailLoginRequest.getCodeChallenge()) || !"S256".equalsIgnoreCase(emailLoginRequest.getCodeChallengeMethod())) {
+            return ResponseEntity.badRequest().body(Map.of("error", "invalid_request", "error_description", "code_challenge and code_challenge_method (S256) are required."));
+        }
         try{
-            AuthResponse jwtToken = authService.loginWithEmail(emailLoginRequest.getEmail(), emailLoginRequest.getPassword());
-            return getOkResponseEntity(jwtToken);
+            String authCode = authService.loginWithEmail(
+                    emailLoginRequest.getEmail(),
+                    emailLoginRequest.getPassword(),
+                    emailLoginRequest.getCodeChallenge(),
+                    emailLoginRequest.getCodeChallengeMethod()
+            );
+            return ResponseEntity.ok(Map.of("code", authCode));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", "invalid_request"));
+        }
+    }
+
+    @PostMapping("/token")
+    public ResponseEntity<?> exchangeCodeForToken(@RequestBody TokenRequest tokenRequest) {
+        String grantType = tokenRequest.getGrantType();
+
+        if (!StringUtils.hasText(grantType)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "invalid_request", "error_description", "grant_type is required."));
+        }
+
+        try {
+            switch (grantType){
+                case "authorization_code":
+                    if (!StringUtils.hasText(tokenRequest.getCode()) || !StringUtils.hasText(tokenRequest.getCodeVerifier())) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "invalid_request", "error_description", "code and code_verifier are required for this grant type."));
+                    }
+                    AuthResponse tokens = authService.exchangeCodeForToken(tokenRequest.getCode(), tokenRequest.getCodeVerifier());
+                    return getOkResponseEntity(tokens);
+                case "refresh_token":
+                    if (!StringUtils.hasText(tokenRequest.getRefreshToken())) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "invalid_request", "error_description", "refresh_token is required for this grant type."));
+                    }
+                    AuthResponse newToken = authService.refreshAccessToken(tokenRequest.getRefreshToken());
+                    return getOkResponseEntity(newToken);
+                default:
+                    return ResponseEntity.badRequest().body(Map.of("error", "unsupported_grant_type"));
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "invalid_grant", "error_description", e.getMessage()));
         }
     }
 
@@ -68,18 +108,18 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
-        try {
-            AuthResponse newToken = authService.refreshAccessToken(refreshTokenRequest.getRefreshToken());
-            return getOkResponseEntity(newToken);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "invalid_grant");
-            errorResponse.put("error_description", "The refresh token is invalid or expired.");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-        }
-    }
+//    @PostMapping("/refresh")
+//    public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
+//        try {
+//            AuthResponse newToken = authService.refreshAccessToken(refreshTokenRequest.getRefreshToken());
+//            return getOkResponseEntity(newToken);
+//        } catch (Exception e) {
+//            Map<String, String> errorResponse = new HashMap<>();
+//            errorResponse.put("error", "invalid_grant");
+//            errorResponse.put("error_description", "The refresh token is invalid or expired.");
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+//        }
+//    }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
