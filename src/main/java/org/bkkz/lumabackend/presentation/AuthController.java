@@ -40,12 +40,13 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Register register) {
         try{
-            authService.registerUser(register);
-           return ResponseEntity.ok(Map.of(
-                   "result", "User registered successfully"
-           ));
+            String authorizationCode = authService.registerUser(register);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "result", "User registered successfully",
+                    "authorization_code", authorizationCode
+            ));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -122,17 +123,16 @@ public class AuthController {
 //    }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
+    public ResponseEntity<?> logout(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        if (refreshTokenRequest.getRefreshToken() == null || refreshTokenRequest.getRefreshToken().isEmpty()) {
+            return ResponseEntity.badRequest().body("Missing or invalid Token");
         }
         try {
-            String jwt = authHeader.substring(7);
-            String uid = jwtUtil.extractUid(jwt);
+            String uid = jwtUtil.extractUid(refreshTokenRequest.getRefreshToken());
             authService.logout(uid);
             return ResponseEntity.ok(Map.of("result", "Logged out successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Failed to revoke token: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", "Failed to revoke token: " + e.getMessage()));
         }
     }
 }

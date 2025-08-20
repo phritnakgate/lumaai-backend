@@ -8,6 +8,9 @@ public class Register {
     private String password;
     private String name;
 
+    private String codeChallenge;
+    private String codeChallengeMethod;
+
 
     public String getEmail() {
         return email;
@@ -17,5 +20,11 @@ public class Register {
 
     public String getName() {
         return name;
+    }
+    public String getCodeChallenge() {
+        return codeChallenge;
+    }
+    public String getCodeChallengeMethod() {
+        return codeChallengeMethod;
     }
 }

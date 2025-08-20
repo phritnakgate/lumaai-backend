@@ -19,6 +19,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -137,11 +138,17 @@ public class AuthService {
             throw new RuntimeException("Refresh token is invalid or expired. Please log in again.");
         }
 
-        // If valid, issue a new access token
+        // Validate the refresh token against Firebase
         UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
+        Date tokenIssuedAt = jwtUtil.extractIssuedAt(refreshToken);
+        long revocationTimestamp = userRecord.getTokensValidAfterTimestamp();
+        if (tokenIssuedAt.getTime() <= revocationTimestamp) {
+            throw new RuntimeException("Refresh token has been revoked. Please log in again.");
+        }
+
+        // If valid, issue a new access token
         String newAccessToken = jwtUtil.generateAccessToken(userRecord.getUid(), userRecord.getEmail());
         String newRefreshToken = jwtUtil.generateRefreshToken(userRecord.getUid());
-
         return new AuthResponse(newAccessToken, newRefreshToken);
     }
 
@@ -161,13 +168,19 @@ public class AuthService {
     }
 
 
-    public void registerUser(Register register) throws FirebaseAuthException {
+    public String registerUser(Register register) throws FirebaseAuthException {
         UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest()
                 .setEmail(register.getEmail())
                 .setPassword(register.getPassword())
                 .setDisplayName(register.getName());
         UserRecord userRecord = FirebaseAuth.getInstance().createUser(createRequest);
         saveOrUpdateUser(userRecord.getUid(), register.getName(), register.getEmail());
+        return generateAuthorizationCode(
+                userRecord.getUid(),
+                userRecord.getEmail(),
+                register.getCodeChallenge(),
+                register.getCodeChallengeMethod()
+        );
     }
 
     public void logout(String uid) throws FirebaseAuthException {
