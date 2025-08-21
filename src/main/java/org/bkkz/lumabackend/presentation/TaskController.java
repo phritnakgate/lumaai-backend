@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @SecurityRequirement(name = "bearerAuth")
 @RequestMapping("/api/task")
 public class TaskController {
-    @PostMapping(value = "/create-task")
+    @PostMapping(value = "/")
     public ResponseEntity<?> createTask(@Valid @RequestBody CreateTaskRequest task) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -147,20 +147,20 @@ public class TaskController {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 if (!snapshot.exists()) {
-                    future.complete(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(Map.of("error", "Task not found")));
+                    future.complete(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("error", "Task with this id not found.")));
                     return;
                 }
 
                 String ownerId = snapshot.child("userId").getValue(String.class);
                 if (!userId.equals(ownerId)) {
-                    future.complete(ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("error", "You do not have permission to delete this task")));
+                    future.complete(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(Map.of("error", "You do not have permission to delete this task.")));
                     return;
                 }
 
                 taskRef.removeValueAsync();
-                future.complete(ResponseEntity.ok(Map.of("message", "Task deleted successfully")));
+                future.complete(ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("result", "Task Deleted successfully!")));
             }
 
             @Override
@@ -173,6 +173,7 @@ public class TaskController {
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
