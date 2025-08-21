@@ -3,13 +3,18 @@ package org.bkkz.lumabackend.presentation;
 import com.google.firebase.database.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.bkkz.lumabackend.model.Task;
+import org.bkkz.lumabackend.model.CreateTaskRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.BindingResult;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,32 +26,42 @@ import java.util.concurrent.ExecutionException;
 @RequestMapping("/api/task")
 public class TaskController {
     @PostMapping(value = "/create-task")
-    public ResponseEntity<?> createTask(@Valid @RequestBody Task task, BindingResult bindingResult) {
+    public ResponseEntity<?> createTask(@Valid @RequestBody CreateTaskRequest task) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-        task.setUserId(userId);
 
-        if (bindingResult.hasErrors()) {
-            List<String> errors = bindingResult.getFieldErrors().stream()
-                    .map(e -> e.getField() + " " + e.getDefaultMessage())
-                    .toList();
-            return ResponseEntity.badRequest().body(Map.of("errors", errors));
+        if (task.getName() == null || task.getName().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Task Name is required"));
+        }
+        if(!task.getDueDate().isEmpty() && !task.getDueDate().matches("^(\\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Due Date must be in yyyy-MM-dd format"));
+        }
+        if(!task.getDueTime().isEmpty() && !task.getDueTime().matches("^([01]\\d|2[0-3]):([0-5]\\d)$")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Due Time must be in HH:mm and 24hr format"));
         }
         try {
             DatabaseReference reference = FirebaseDatabase.getInstance()
                     .getReference("tasks")
                     .push();
 
+            ZonedDateTime dtNow = ZonedDateTime.now(ZoneId.of("GMT+7"));
+            ZonedDateTime taskDateTime = dtNow;
+            try {
+                LocalDate taskDate = StringUtils.hasText(task.getDueDate()) ? LocalDate.parse(task.getDueDate()) : dtNow.toLocalDate();
+                LocalTime taskTime = StringUtils.hasText(task.getDueTime()) ? LocalTime.parse(task.getDueTime()) : dtNow.toLocalTime();
+                taskDateTime = ZonedDateTime.of(taskDate, taskTime, ZoneId.of("GMT+7"));
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid date or time"));
+            }
+
             reference.setValueAsync(Map.of(
-                    "userId", task.getUserId(),
+                    "userId", userId,
                     "name", task.getName(),
                     "description", task.getDescription() != null ? task.getDescription() : "",
-                    "dueDate", task.getDueDate() != null ? task.getDueDate() : "",
-                    "dueTime", task.getDueTime() != null ? task.getDueTime() : "",
-                    "isFinished", task.getIsFinished()
+                    "dateTime", taskDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                    "isFinished", false
             ));
-            return ResponseEntity.ok(Map.of(
-                    "message", "Task Created successfully!",
-                    "taskId", reference.getKey()
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "result", "Task Created successfully!"
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());

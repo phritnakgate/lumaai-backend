@@ -8,7 +8,7 @@ public class Task {
     @NotBlank(message = "Task name is required")
     private String name;
     private String description;
-    @Pattern(regexp = "^\\d{2}/\\d{2}/\\d{4}$", message = "Date must be in dd/MM/yyyy format")
+    @Pattern(regexp = "^\\d{4}/\\d{2}/\\d{2}$", message = "Date must be in yyyy/MM/dd format")
     private String dueDate;
     @Pattern(regexp = "^\\d{2}:\\d{2}$", message = "Time must be in HH:mm format")
     private String dueTime;
