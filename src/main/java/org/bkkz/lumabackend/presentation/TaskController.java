@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")
@@ -44,7 +45,7 @@ public class TaskController {
                     .push();
 
             ZonedDateTime dtNow = ZonedDateTime.now(ZoneId.of("GMT+7"));
-            ZonedDateTime taskDateTime = dtNow;
+            ZonedDateTime taskDateTime;
             try {
                 LocalDate taskDate = StringUtils.hasText(task.getDueDate()) ? LocalDate.parse(task.getDueDate()) : dtNow.toLocalDate();
                 LocalTime taskTime = StringUtils.hasText(task.getDueTime()) ? LocalTime.parse(task.getDueTime()) : dtNow.toLocalTime();
@@ -69,7 +70,7 @@ public class TaskController {
     }
 
     @GetMapping(value = "my-tasks")
-    public ResponseEntity<?> getMyTasks() {
+    public ResponseEntity<?> getMyTasks(@RequestParam(required = false) String date) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         DatabaseReference reference = FirebaseDatabase.getInstance()
                 .getReference("tasks");
@@ -85,11 +86,34 @@ public class TaskController {
 
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
                     Map<String, Object> taskData = (Map<String, Object>) child.getValue();
-                    taskData.put("id", child.getKey());
-                    tasks.add(taskData);
+                    if(taskData != null){
+                        taskData.put("id", child.getKey());
+                        tasks.add(taskData);
+                    }
+
                 }
 
-                future.complete(ResponseEntity.ok(tasks));
+                List<Map<String, Object>> filteredTasks;
+                if (!StringUtils.hasText(date)) {
+                    filteredTasks = tasks;
+                } else {
+                    if(!(date.matches("^\\d{4}-\\d{2}-\\d{2}$") || date.matches("^\\d{4}-\\d{2}$"))) {
+                        future.complete(ResponseEntity.badRequest().body(Map.of("error", "Date must be in yyyy-MM-dd or yyyy-MM format")));
+                        return;
+                    }
+                    filteredTasks = tasks.stream().filter(task -> {
+                        Object dateTimeObj = task.get("dateTime");
+                        if (!(dateTimeObj instanceof String taskDateTime)) {
+                            return false;
+                        }
+                        return taskDateTime.startsWith(date);
+                    }).collect(Collectors.toList());
+                }
+                if (filteredTasks.isEmpty()) {
+                    future.complete(ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("result", "No tasks found.")));
+                } else {
+                    future.complete(ResponseEntity.status(HttpStatus.OK).body(Map.of("results",filteredTasks)));
+                }
             }
 
             @Override
@@ -103,6 +127,7 @@ public class TaskController {
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
