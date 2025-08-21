@@ -228,7 +228,7 @@ public class TaskController {
         String ownerId = snapshot.child("userId").getValue(String.class);
         if (!userId.equals(ownerId)) {
             future.complete(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "You do not have permission to delete this task.")));
+                    .body(Map.of("error", "You do not have permission to modify this task.")));
             return true;
         }
         return false;
