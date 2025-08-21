@@ -1,4 +1,4 @@
-package org.bkkz.lumabackend.model;
+package org.bkkz.lumabackend.model.authentication;
 
 public record PkceDetails(
         String uid,

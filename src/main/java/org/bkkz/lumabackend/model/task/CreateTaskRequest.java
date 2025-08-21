@@ -1,4 +1,4 @@
-package org.bkkz.lumabackend.model;
+package org.bkkz.lumabackend.model.task;
 
 public class CreateTaskRequest {
     private String name;

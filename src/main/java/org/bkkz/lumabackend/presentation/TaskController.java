@@ -1,9 +1,12 @@
 package org.bkkz.lumabackend.presentation;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.database.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.bkkz.lumabackend.model.CreateTaskRequest;
+import org.bkkz.lumabackend.model.task.CreateTaskRequest;
+import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -146,18 +149,7 @@ public class TaskController {
         taskRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                if (!snapshot.exists()) {
-                    future.complete(ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(Map.of("error", "Task with this id not found.")));
-                    return;
-                }
-
-                String ownerId = snapshot.child("userId").getValue(String.class);
-                if (!userId.equals(ownerId)) {
-                    future.complete(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(Map.of("error", "You do not have permission to delete this task.")));
-                    return;
-                }
+                if (checkTaskValidity(snapshot, future, userId)) return;
 
                 taskRef.removeValueAsync();
                 future.complete(ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("result", "Task Deleted successfully!")));
@@ -182,33 +174,32 @@ public class TaskController {
     @PatchMapping("/{taskId}")
     public ResponseEntity<?> updateTask(
             @PathVariable String taskId,
-            @RequestBody Map<String, Object> updates
+            @RequestBody @Valid UpdateTaskRequest updateTaskRequest
     ) {
         String userId = SecurityContextHolder.getContext().getAuthentication().getName();
         DatabaseReference taskRef = FirebaseDatabase.getInstance()
                 .getReference("tasks")
                 .child(taskId);
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> updates = objectMapper.convertValue(updateTaskRequest, Map.class);
+
+        updates.entrySet().removeIf(entry -> entry.getValue() == null);
+
         CompletableFuture<ResponseEntity<?>> future = new CompletableFuture<>();
 
         taskRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                if (!snapshot.exists()) {
-                    future.complete(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(Map.of("error", "Task not found")));
-                    return;
-                }
+                if (checkTaskValidity(snapshot, future, userId)) return;
 
-                String ownerId = snapshot.child("userId").getValue(String.class);
-                if (!userId.equals(ownerId)) {
-                    future.complete(ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("error", "You do not have permission to update this task")));
+                if (updates.isEmpty()) {
+                    future.complete(ResponseEntity.badRequest().body(Map.of("error", "No fields to update or invalid data provided.")));
                     return;
                 }
 
                 taskRef.updateChildrenAsync(updates);
-                future.complete(ResponseEntity.ok(Map.of("message", "Task updated successfully")));
+                future.complete(ResponseEntity.ok(Map.of("result", "Task updated successfully")));
             }
 
             @Override
@@ -221,9 +212,26 @@ public class TaskController {
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private boolean checkTaskValidity(@NotNull DataSnapshot snapshot, CompletableFuture<ResponseEntity<?>> future, String userId) {
+        if (!snapshot.exists()) {
+            future.complete(ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Task with this id not found.")));
+            return true;
+        }
+
+        String ownerId = snapshot.child("userId").getValue(String.class);
+        if (!userId.equals(ownerId)) {
+            future.complete(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "You do not have permission to delete this task.")));
+            return true;
+        }
+        return false;
     }
 
 }
