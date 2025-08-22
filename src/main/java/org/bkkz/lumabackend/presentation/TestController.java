@@ -25,7 +25,7 @@ public class TestController {
         Map<String, Object> mockResponse = new HashMap<>();
         List<Map<String, Object>> decoratedList = new ArrayList<>();
         Map<String, Object> task1 = new HashMap<>();
-        task1.put("task", "จัดตาราง");
+        task1.put("task", "จัดตารางงงงงงงง");
         task1.put("date", "");
         task1.put("time", "");
         task1.put("intent", Arrays.asList("Check", "Add"));
@@ -34,8 +34,8 @@ public class TestController {
         Map<String, Object> task2 = new HashMap<>();
         task2.put("task", "ทานอาหาร");
         task2.put("date", "2025-07-30");
-        task2.put("time", "17:30");
-        task2.put("intent", Arrays.asList("Check", "Add"));
+        task2.put("time", "18:30");
+        task2.put("intent", Arrays.asList("Check", "Edit"));
         decoratedList.add(task2);
         mockResponse.put("text", "เพิ่มจัดตารางเรียนและเพิ่มทานอาหารเย็นให้หน่อย");
         mockResponse.put("decorated_input",Map.of(
