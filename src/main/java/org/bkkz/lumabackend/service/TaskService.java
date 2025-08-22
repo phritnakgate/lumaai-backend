@@ -2,6 +2,7 @@ package org.bkkz.lumabackend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.database.*;
+import jakarta.annotation.Nullable;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class TaskService {
         ));
     }
 
-    public CompletableFuture<List<Map<String, Object>>> getTasksByDate(String date) {
+    public CompletableFuture<List<Map<String, Object>>> getTasksByDate(@Nullable String date) {
         String userId = getCurrentUserId();
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference("tasks");
         Query query = reference.orderByChild("userId").equalTo(userId);
@@ -65,7 +66,7 @@ public class TaskService {
                     }
                 }
 
-                if (!StringUtils.hasText(date)) {
+                if (date == null || date.isEmpty()) {
                     future.complete(tasks);
                 } else {
                     List<Map<String, Object>> filteredTasks = tasks.stream()

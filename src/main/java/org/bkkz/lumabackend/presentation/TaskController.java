@@ -49,7 +49,7 @@ public class TaskController {
 
     @GetMapping(value = "my-tasks")
     public ResponseEntity<?> getMyTasks(@RequestParam(required = false) String date) {
-        if(!(date.matches("^\\d{4}-\\d{2}-\\d{2}$") || date.matches("^\\d{4}-\\d{2}$"))) {
+        if(date != null && (!(date.matches("^\\d{4}-\\d{2}-\\d{2}$") || date.matches("^\\d{4}-\\d{2}$")))) {
             return ResponseEntity.badRequest().body(Map.of("error", "Date must be in yyyy-MM-dd or yyyy-MM format"));
         }
         try {
