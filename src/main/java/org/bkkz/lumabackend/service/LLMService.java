@@ -54,10 +54,16 @@ public class LLMService {
                 handleRemove();
                 break;
             case SEARCH:
-                // Logic for SEARCH intent
+                serviceResponse.get("results").add(Map.of(
+                        "intent", "SEARCH",
+                        "message", decoratedItem.response()
+                ));
                 break;
             case GOOGLESEARCH:
-                // Logic for GOOGLESEARCH intent
+                serviceResponse.get("results").add(Map.of(
+                        "intent", "GOOGLESEARCH",
+                        "message", decoratedItem.source()
+                ));
                 break;
             case PLAN:
                 // Logic for PLAN intent

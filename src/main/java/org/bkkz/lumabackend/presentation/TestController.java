@@ -37,12 +37,19 @@ public class TestController {
         task2.put("time", "18:30");
         task2.put("intent", Arrays.asList("Check", "Edit"));
         decoratedList.add(task2);
-        mockResponse.put("text", "เพิ่มจัดตารางเรียนและเพิ่มทานอาหารเย็นให้หน่อย");
+
+        Map<String, Object> search = new HashMap<>();
+        search.put("intent", Arrays.asList("Search", "GoogleSearch"));
+        search.put("response", "ขนมปังยอดฮิตในปี 2025 จากข้อมูลที่ได้รับ มีแนวโน้มว่าจะเป็น \\\"Shio Pan\\\" หรือ ขนมปังเกลือ เนื่องจากมีหลายร้านที่แนะนำและให้ความสนใจ โดยเฉพาะร้าน Eric Kayser และ Jayeon Do Salted Bakery");
+        search.put("source","https://www.lemon8-app.com/@benzneb4/7489666656105677313?region=th");
+        decoratedList.add(search);
+
+        mockResponse.put("text", "เพิ่มจัดตารางเรียนและเพิ่มทานอาหารเย็นให้หน่อย หาเรื่องขนมปังยอดฮิตในปี 2025 ด้วย");
         mockResponse.put("decorated_input",Map.of(
-                "text","เพิ่มจัดตารางเรียน, เพิ่มทานอาหารเย็น",
+                "text","เพิ่มจัดตารางเรียน, เพิ่มทานอาหารเย็นม ค้นหาเรื่องขนมปังยอดฮิตในปี 2025",
                 "decorated", decoratedList
         ));
-        mockResponse.put("message", "เพิ่มจัดตารางและเพิ่มทานอาหารเรียบร้อยแล้วครับ ต้องการให้ช่วยอะไรเพิ่มเติมอีกมั้ยครับ?");
+        mockResponse.put("message", "เพิ่มจัดตารางและเพิ่มทานอาหารเรียบร้อยแล้วครับ และขนมปังยอดฮิตในปี 2025 จากข้อมูลที่ได้รับ มีแนวโน้มว่าจะเป็น \\\"Shio Pan\\\" หรือ ขนมปังเกลือ เนื่องจากมีหลายร้านที่แนะนำและให้ความสนใจ โดยเฉพาะร้าน Eric Kayser และ Jayeon Do Salted Bakery ต้องการให้ช่วยอะไรเพิ่มเติมอีกมั้ยครับ?");
         return ResponseEntity.ok().body(mockResponse);
     }
 }
