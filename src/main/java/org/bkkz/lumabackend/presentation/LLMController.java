@@ -2,8 +2,8 @@ package org.bkkz.lumabackend.presentation;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.bkkz.lumabackend.model.llm.llmResponse.DecoratedItem;
 import org.bkkz.lumabackend.model.llm.LLMPromptRequest;
+import org.bkkz.lumabackend.model.llm.llmResponse.DecoratedItem;
 import org.bkkz.lumabackend.model.llm.llmResponse.LLMPromptResponse;
 import org.bkkz.lumabackend.service.LLMService;
 import org.bkkz.lumabackend.service.LogService;
@@ -11,10 +11,7 @@ import org.bkkz.lumabackend.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
@@ -84,5 +81,26 @@ public class LLMController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
+    }
+
+    @GetMapping("/history")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<?> getLLMHistory(@RequestParam String intent, @RequestParam(required = false) String date, @RequestParam(required = false) String keyword) {
+        if(date != null && (!(date.matches("^\\d{4}-\\d{2}-\\d{2}$") || date.matches("^\\d{4}-\\d{2}$")))) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Date must be in yyyy-MM-dd or yyyy-MM format"));
+        }
+        try {
+            List<Map<String, Object>> logs = logService.getLogs(intent, date, keyword).get();
+            if(logs.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("result", "No logs found"));
+            }else{
+                return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                        "results", logs
+                ));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+
     }
 }
