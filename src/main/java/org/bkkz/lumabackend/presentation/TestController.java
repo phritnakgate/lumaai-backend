@@ -24,6 +24,13 @@ public class TestController {
     public ResponseEntity<?> llmMock() {
         Map<String, Object> mockResponse = new HashMap<>();
         List<Map<String, Object>> decoratedList = new ArrayList<>();
+        Map<String, Object> checkDate = new HashMap<>();
+        checkDate.put("task", "");
+        checkDate.put("date", "2025-08-21");
+        checkDate.put("time", "");
+        checkDate.put("intent", Arrays.asList("Check"));
+        decoratedList.add(checkDate);
+
         Map<String, Object> task1 = new HashMap<>();
         task1.put("task", "จัดตารางงงงงงงง");
         task1.put("date", "");

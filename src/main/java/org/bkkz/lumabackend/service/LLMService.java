@@ -80,10 +80,10 @@ public class LLMService {
                     .toList();
             System.out.println("Filter by name: "+ userTasks);
             //ถ้ามีแค่ Check และไม่มี Add, Remove, Edit จะกรองวันที่ด้วย
-            if(decoratedItem.intent().contains("CHECK") &&
-                    !decoratedItem.intent().contains("ADD") &&
-                    !decoratedItem.intent().contains("REMOVE") &&
-                    !decoratedItem.intent().contains("EDIT")) {
+            if(decoratedItem.intent().contains("Check") &&
+                    !decoratedItem.intent().contains("Add") &&
+                    !decoratedItem.intent().contains("Remove") &&
+                    !decoratedItem.intent().contains("Edit")) {
                 filterTaskByDate();
             }
 
