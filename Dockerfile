@@ -26,4 +26,5 @@ WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Run the app
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE 8080
+CMD ["sh","-c","java $JAVA_TOOL_OPTIONS -jar app.jar --server.port=${PORT} --server.address=0.0.0.0"]
