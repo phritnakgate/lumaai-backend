@@ -40,7 +40,7 @@ public class LLMController {
         //Call an external LLM service
         try{
             LLMPromptResponse response = llmWebClient.post()
-                    .uri("/handle-input")
+                    .uri("https://jsonblob.com/api/1412324703066054656")
                     .retrieve()
                     .bodyToMono(LLMPromptResponse.class)
                     .block();
