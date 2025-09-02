@@ -39,7 +39,7 @@ public class LLMController {
     public ResponseEntity<?> handleLLMRequest(@Valid @RequestBody LLMPromptRequest llmPromptRequest) {
         //Call an external LLM service
         try{
-            LLMPromptResponse response = llmWebClient.post()
+            LLMPromptResponse response = llmWebClient.get()
                     .uri("https://jsonblob.com/api/1412324703066054656")
                     .retrieve()
                     .bodyToMono(LLMPromptResponse.class)
