@@ -147,7 +147,7 @@ public class LLMService {
 
     private void handleEdit() {
         try{
-            filterTaskByDate();
+
             if (userTasks.isEmpty()) {
 
                 serviceResponse.get("errors").add(Map.of("intent", "EDIT", "message", "Task not found for editing"));

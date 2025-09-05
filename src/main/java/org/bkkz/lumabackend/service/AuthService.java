@@ -157,8 +157,7 @@ public class AuthService {
             final FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference ref = database.getReference("users").child(uid);
             Map<String, Object> userData = new HashMap<>();
-            userData.put("uid", uid);
-            userData.put("name", name);
+            userData.put("displayName", name);
             userData.put("email", email);
             ref.updateChildrenAsync(userData);
             System.out.println("User data saved/updated for UID: " + uid);
