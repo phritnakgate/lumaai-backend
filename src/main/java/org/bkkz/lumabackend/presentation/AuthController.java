@@ -1,7 +1,7 @@
 package org.bkkz.lumabackend.presentation;
 
 import jakarta.validation.Valid;
-import org.bkkz.lumabackend.model.*;
+import org.bkkz.lumabackend.model.authentication.*;
 import org.bkkz.lumabackend.security.JwtUtil;
 import org.bkkz.lumabackend.service.AuthService;
 import org.jetbrains.annotations.NotNull;

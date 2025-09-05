@@ -1,4 +1,4 @@
-package org.bkkz.lumabackend.model;
+package org.bkkz.lumabackend.model.authentication;
 
 import jakarta.validation.constraints.Email;
 
