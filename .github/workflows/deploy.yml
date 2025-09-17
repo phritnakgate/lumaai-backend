@@ -51,13 +51,13 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.GAR_LOCATION }}
           image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          service_account: github-cloud-run@lumaai-12b32.iam.gserviceaccount.com # Service account ที่ Cloud Run จะใช้ตอนรัน
+          flags: --service-account=github-cloud-run@lumaai-12b32.iam.gserviceaccount.com # Service account ที่ Cloud Run จะใช้ตอนรัน
           secrets: |
             /secrets/firebase/firebase-adminsdk=firebase-adminsdk:latest
             /secrets/gcp/credentials.json=credentials:latest
             
-            FIREBASE_API_KEY=secret:lumaai-backend-env:latest?key=FIREBASE_API_KEY
-            FIREBASE_DATABASE_URL=secret:lumaai-backend-env:latest?key=FIREBASE_DATABASE_URL
+            FIREBASE_API_KEY=FIREBASE_API_KEY:latest
+            FIREBASE_DATABASE_URL=FIREBASE_DATABASE_URL:latest
 
           env_vars: |
             SPRING_PROFILES_ACTIVE=prod
