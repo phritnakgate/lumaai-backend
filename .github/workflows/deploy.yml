@@ -1,47 +1,74 @@
-name: Deploy to Cloud Run
+# ชื่อ Workflow
+name: Build, Push, and Deploy to Cloud Run
 
+# ให้ทำงานเมื่อมีการ push code ไปที่ branch 'main'
 on:
   push:
     branches:
       - main
 
+# กำหนด Environment Variables ที่ใช้ในทุก job เพื่อความสะดวก
+env:
+  PROJECT_ID: lumaai-12b32
+  GAR_LOCATION: asia-southeast1
+  SERVICE_NAME: lumaai-backend
+  REPO_NAME: luma-backend-docker-repo
+
 jobs:
   deploy:
+    name: Deploy to Cloud Run
     runs-on: ubuntu-latest
 
+    # (สำคัญ) ให้สิทธิ์ Workflow ในการรับ Token เพื่อใช้กับ Workload Identity Federation
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: lumaai-12b32
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        id: auth
+        uses: 'google-github-actions/auth@v2'
         with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      - name: Access Firebase Database URL secret
-        id: get_db_url
-        run: echo "::set-output name=DATABASE_URL::$(gcloud secrets versions access latest --secret=DATABASE_URL)"
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev
-
-      - name: Build & Push Docker image
-        run: |
-          docker build -t asia-southeast1-docker.pkg.dev/lumaai-12b32/luma-backend-docker-repo/my-app:$GITHUB_SHA .
-          docker push asia-southeast1-docker.pkg.dev/lumaai-12b32/luma-backend-docker-repo/my-app:$GITHUB_SHA
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
       - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy lumaai-backend \
-            --image asia-southeast1-docker.pkg.dev/lumaai-12b32/luma-backend-docker-repo/my-app:$GITHUB_SHA \
-            --platform managed \
-            --region asia-southeast1 \
-            --service-account github-cloud-run@lumaai-12b32.iam.gserviceaccount.com \
-            --allow-unauthenticated \
-            --set-env-vars SPRING_PROFILES_ACTIVE=prod \
-            --set-env-vars DATABASE_URL=${{ steps.get_db_url.outputs.DATABASE_URL }}
+        id: deploy
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.GAR_LOCATION }}
+          image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          service_account: github-cloud-run@lumaai-12b32.iam.gserviceaccount.com # Service account ที่ Cloud Run จะใช้ตอนรัน
+          
+          # --- การจัดการ Secrets และ Environment Variables ---
+          
+          # 1. ดึงค่าจาก Secret Manager มาเป็น Environment Variable
+          # ตัวอย่าง: ดึงค่า DATABASE_URL จาก Secret ที่ชื่อ DATABASE_URL
+          env_vars: |
+            SPRING_PROFILES_ACTIVE=prod
+            DATABASE_URL=secret:DATABASE_URL:latest
+
+          # 2. Mount Secret ที่เป็นไฟล์ (สำหรับ firebase-adminsdk และ credentials.json)
+          # Action นี้จะสร้างไฟล์ให้ใน container ตาม path ที่กำหนด
+          mount_secrets: |
+            /secrets/firebase/firebase-adminsdk=firebase-adminsdk:latest
+            /secrets/gcp/credentials.json=credentials:latest
+
+          # 3. Mount Secret ที่เก็บค่า .env ทั้งหมด
+          # Cloud Run จะอ่านค่าใน Secret 'my-app-env' แล้วสร้างเป็น env var ให้ทั้งหมด
+          env_vars_from_secret:
+            secret_name: lumaai-backend-env # ชื่อ Secret ที่เก็บค่า .env
+            all_variables: true # นำทุก key-value pair ใน secret มาใช้
