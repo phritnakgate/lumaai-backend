@@ -10,9 +10,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.lang.NonNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -23,12 +26,24 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
+    private final List<String> publicPaths = Arrays.asList("/api/auth", "/api/test");
+
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain chain)
             throws ServletException, IOException {
 
-        final String authorizationHeader = request.getHeader("Authorization");
+        String requestURI = request.getRequestURI();
+        boolean isPublicPath = publicPaths.stream().anyMatch(requestURI::startsWith);
 
+        if (isPublicPath) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        final String authorizationHeader = request.getHeader("Authorization");
         String uid = null;
         String jwt = null;
 
