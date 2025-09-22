@@ -17,7 +17,7 @@ public class FirebaseProdConfig {
         try {
             FileInputStream serviceAccount = new FileInputStream("/secrets/firebase/firebase-adminsdk");
 
-            String databaseUrl = System.getenv("DATABASE_URL");
+            String databaseUrl = System.getenv("FIREBASE_DATABASE_URL");
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
