@@ -85,7 +85,7 @@ public class LLMController {
 
     @GetMapping("/history")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<?> getLLMHistory(@RequestParam String intent, @RequestParam(required = false) String date, @RequestParam(required = false) String keyword) {
+    public ResponseEntity<?> getLLMHistory(@RequestParam(required = false) String intent, @RequestParam(required = false) String date, @RequestParam(required = false) String keyword) {
         if(date != null && (!(date.matches("^\\d{4}-\\d{2}-\\d{2}$") || date.matches("^\\d{4}-\\d{2}$")))) {
             return ResponseEntity.badRequest().body(Map.of("error", "Date must be in yyyy-MM-dd or yyyy-MM format"));
         }

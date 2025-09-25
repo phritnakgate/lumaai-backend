@@ -5,6 +5,7 @@ import jakarta.annotation.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,7 +49,7 @@ public class LogService {
         ));
     }
 
-    public CompletableFuture<List<Map<String, Object>>> getLogs(String intent, @Nullable String date, @Nullable String keyword){
+    public CompletableFuture<List<Map<String, Object>>> getLogs(@Nullable String intent, @Nullable String date, @Nullable String keyword){
         String userId = getCurrentUserId();
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference("logs");
         Query query = reference.orderByChild("userId").equalTo(userId);
@@ -62,6 +63,28 @@ public class LogService {
                     if (logData != null) {
                         logData.put("id", child.getKey());
                         logs.add(logData);
+                    }
+                }
+
+                logs.sort((a, b) -> {
+                    String tsA = (String) a.get("timeStamp");
+                    String tsB = (String) b.get("timeStamp");
+
+                    OffsetDateTime dateA = OffsetDateTime.parse(tsA, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                    OffsetDateTime dateB = OffsetDateTime.parse(tsB, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+                    return dateB.compareTo(dateA);
+                });
+
+                if(intent == null){
+                    if(logs.isEmpty()){
+                        future.complete(logs);
+                        return;
+                    }
+                    if(logs.size() > 3){
+                        future.complete(logs.subList(0, 3));
+                    }else{
+                        future.complete(logs);
                     }
                 }
                 List<Map<String, Object>> filteredLogs = logs.stream()
