@@ -128,7 +128,7 @@ public class LLMService {
 
                 serviceResponse.get("results").add(Map.of(
                         "intent", "ADD",
-                        "message", "Task Created"
+                        "message", "สร้างงานเรียบร้อยครับ :D"
                 ));
             }else{
                 userTasks.add(0, Map.of(
@@ -142,7 +142,7 @@ public class LLMService {
                 ));
                 serviceResponse.get("errors").add(Map.of(
                         "intent", "ADD",
-                        "message", "Task Exists on this date, created again?",
+                        "message", "ในวันนี้มีงานอยู่แล้ว คุณยืนยันที่จะเพิ่มงานนี้หรือไม่",
                         "output", userTasks
                 ));
             }
@@ -158,7 +158,7 @@ public class LLMService {
 
             if (userTasks.isEmpty()) {
 
-                serviceResponse.get("errors").add(Map.of("intent", "EDIT", "message", "Task not found for editing"));
+                serviceResponse.get("errors").add(Map.of("intent", "EDIT", "message", "ตรวจสอบแล้ว ไม่พบงานที่ต้องการแก้ไขครับ"));
             } else if (userTasks.size() == 1) {
                 UpdateTaskRequest taskRequest = new UpdateTaskRequest();
                 taskRequest.setName(decoratedItem.task());
@@ -168,7 +168,7 @@ public class LLMService {
                 taskService.updateTask((String) userTasks.get(0).get("id"),taskRequest);
                 serviceResponse.get("results").add(Map.of(
                         "intent", "EDIT",
-                        "message", "Task Edited"
+                        "message", "แก้ไขงานเรียบร้อยครับ :D"
                 ));
             }else{
                 userTasks.add(0, Map.of(
@@ -182,7 +182,7 @@ public class LLMService {
                 ));
                 serviceResponse.get("errors").add(Map.of(
                         "intent", "EDIT",
-                        "message", "Many task found, choose which to edit",
+                        "message", "ตรวจสอบแล้ว พบงานที่แก้ไขได้หลายงาน กรุณากดเลือกแก้ไขครับ",
                         "output", userTasks));
             }
         } catch (Exception e) {
@@ -195,18 +195,18 @@ public class LLMService {
             filterTaskByDate();
             if (userTasks.isEmpty()) {
 
-                serviceResponse.get("errors").add(Map.of("intent", "REMOVE", "message", "Task not found for remove"));
+                serviceResponse.get("errors").add(Map.of("intent", "REMOVE", "message", "ตรวจสอบแล้ว ไม่พบงานที่ต้องการลบครับ"));
             } else if (userTasks.size() == 1) {
                 taskService.deleteTask((String) userTasks.get(0).get("id"));
                 serviceResponse.get("results").add(Map.of(
                         "intent", "REMOVE",
-                        "message", "Task Removed"
+                        "message", "ลบงานเรียบร้อยครับ :D"
                 ));
             }else{
 
                 serviceResponse.get("errors").add(Map.of(
                         "intent", "REMOVE",
-                        "message", "Many task found, choose which to remove",
+                        "message", "ตรวจสอบแล้ว พบงานที่ลบได้หลายงาน กรุณากดเลือกลบครับ",
                         "output", userTasks));
             }
         } catch (Exception e) {
