@@ -5,13 +5,13 @@ import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
 import org.bkkz.lumabackend.utils.LLMIntent;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class LLMService {
 
@@ -77,7 +77,7 @@ public class LLMService {
             List<Map<String, Object>> allUserTasks = taskService.getTasksByDate(null).get();
             userTasks = allUserTasks.stream()
                     .filter(task -> task.get("name").toString().contains(decoratedItem.task()))
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
             System.out.println("Filter by name: "+ userTasks);
             //ถ้ามีแค่ Check และไม่มี Add, Remove, Edit จะกรองวันที่ด้วย
             if(decoratedItem.intent().contains("Check") &&
@@ -105,12 +105,12 @@ public class LLMService {
         if(!decoratedItem.date().isEmpty()) {
             userTasks = userTasks.stream()
                     .filter(task -> task.get("dateTime").toString().startsWith(decoratedItem.date()))
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
             System.out.println("Filter by specific date: "+userTasks);
         }else{
             userTasks = userTasks.stream()
                     .filter(task -> task.get("dateTime").toString().startsWith(query))
-                    .toList();
+                    .collect(Collectors.toCollection(ArrayList::new));
             System.out.println("Filter by today: "+userTasks);
         }
     }
@@ -131,7 +131,15 @@ public class LLMService {
                         "message", "Task Created"
                 ));
             }else{
+                userTasks.add(0, Map.of(
+                        "id","-1",
+                        "name", decoratedItem.task(),
+                        "description", "",
+                        "dateTime", (decoratedItem.date().isEmpty() && decoratedItem.time().isEmpty()) ? "" : toIsoOffsetDateTime(decoratedItem.date(), decoratedItem.time()),
+                        "isFinished",false,
+                        "userId","-1"
 
+                ));
                 serviceResponse.get("errors").add(Map.of(
                         "intent", "ADD",
                         "message", "Task Exists on this date, created again?",
@@ -163,6 +171,15 @@ public class LLMService {
                         "message", "Task Edited"
                 ));
             }else{
+                userTasks.add(0, Map.of(
+                        "id","-1",
+                        "name", decoratedItem.task(),
+                        "description", "",
+                        "dateTime", (decoratedItem.date().isEmpty() && decoratedItem.time().isEmpty()) ? "" : toIsoOffsetDateTime(decoratedItem.date(), decoratedItem.time()),
+                        "isFinished",false,
+                        "userId","-1"
+
+                ));
                 serviceResponse.get("errors").add(Map.of(
                         "intent", "EDIT",
                         "message", "Many task found, choose which to edit",
@@ -195,6 +212,25 @@ public class LLMService {
         } catch (Exception e) {
             serviceResponse.get("errors").add(Map.of("intent", "REMOVE", "message", e.getMessage()));
         }
+    }
+
+    private String toIsoOffsetDateTime(String dateStr, String timeStr) {
+        if(dateStr.isEmpty()){
+            dateStr = LocalDate.now(ZoneId.of("Asia/Bangkok")).toString();
+        }
+        if(timeStr.isEmpty()){
+            timeStr = LocalTime.now(ZoneId.of("Asia/Bangkok")).toString();
+        }
+
+        LocalDate date = LocalDate.parse(dateStr);
+        LocalTime time = LocalTime.parse(timeStr);
+
+        LocalDateTime localDateTime = LocalDateTime.of(date, time);
+
+        ZoneId bangkokZoneId = ZoneId.of("Asia/Bangkok");
+        ZonedDateTime zonedDateTime = localDateTime.atZone(bangkokZoneId);
+
+        return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
 }
