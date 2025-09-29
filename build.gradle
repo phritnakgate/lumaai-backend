@@ -30,6 +30,10 @@ dependencies {
     implementation 'com.google.firebase:firebase-admin:9.5.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation 'io.github.cdimascio:java-dotenv:5.2.2'
+    implementation 'net.sf.jasperreports:jasperreports:7.0.3'
+    implementation("net.sf.jasperreports:jasperreports-charts:7.0.3")
+    implementation("net.sf.jasperreports:jasperreports-pdf:7.0.3")
+    implementation 'org.apache.pdfbox:pdfbox:3.0.5'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
