@@ -44,7 +44,9 @@ public class TaskService {
                 "name", task.getName(),
                 "description", task.getDescription() != null ? task.getDescription() : "",
                 "dateTime", taskDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
-                "isFinished", false
+                "isFinished", false,
+                "category", task.getCategory(),
+                "priority", task.getPriority()
         ));
     }
 

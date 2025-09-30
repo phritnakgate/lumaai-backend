@@ -19,6 +19,7 @@ public class FirebaseLocalConfig {
             Dotenv dotenv = Dotenv.load();
             System.setProperty("firebase.api-key", Objects.requireNonNull(dotenv.get("FIREBASE_API_KEY")));
             System.setProperty("firebase.database-url", Objects.requireNonNull(dotenv.get("FIREBASE_DATABASE_URL")));
+            System.setProperty("firebase.bucket-name", Objects.requireNonNull(dotenv.get("FIREBASE_BUCKET_NAME")));
         } catch (Exception e) {
             System.err.println("Could not load .env");
         }
@@ -36,6 +37,7 @@ public class FirebaseLocalConfig {
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl(System.getProperty("firebase.database-url"))
+                    .setStorageBucket(System.getProperty("firebase.bucket-name"))
                     .build();
 
             if (FirebaseApp.getApps().isEmpty()) {
