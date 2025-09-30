@@ -18,10 +18,12 @@ public class FirebaseProdConfig {
             FileInputStream serviceAccount = new FileInputStream("/secrets/firebase/firebase-adminsdk");
 
             String databaseUrl = System.getenv("DATABASE_URL");
+            String bucketName = System.getenv("BUCKET_NAME");
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl(databaseUrl)
+                    .setStorageBucket(bucketName)
                     .build();
 
             if (FirebaseApp.getApps().isEmpty()) {
