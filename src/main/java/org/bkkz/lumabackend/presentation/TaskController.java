@@ -39,6 +39,12 @@ public class TaskController {
         if(!task.getDueTime().isEmpty() && !task.getDueTime().matches("^([01]\\d|2[0-3]):([0-5]\\d)$")) {
             return ResponseEntity.badRequest().body(Map.of("error", "Due Time must be in HH:mm and 24hr format"));
         }
+        if(task.getCategory() < 0 || task.getCategory() > 5) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid category"));
+        }
+        if(task.getPriority() < 0 || task.getPriority() > 2) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid priority"));
+        }
         try {
             taskService.createTask(task);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("result", "Task Created successfully!"));

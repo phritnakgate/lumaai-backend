@@ -124,6 +124,8 @@ public class LLMService {
                 taskRequest.setDescription("");
                 taskRequest.setDueDate(decoratedItem.date());
                 taskRequest.setDueTime(decoratedItem.time());
+                taskRequest.setCategory(0);
+                taskRequest.setPriority(0);
                 taskService.createTask(taskRequest);
 
                 serviceResponse.get("results").add(Map.of(
