@@ -58,6 +58,7 @@ jobs:
             
             FIREBASE_API_KEY=FIREBASE_API_KEY:latest
             FIREBASE_DATABASE_URL=FIREBASE_DATABASE_URL:latest
+            FIREBASE_BUCKET_NAME=FIREBASE_BUCKET_NAME:latest
 
           env_vars: |
             SPRING_PROFILES_ACTIVE=prod
