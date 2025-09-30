@@ -1,5 +1,9 @@
 package org.bkkz.lumabackend.service;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.firebase.cloud.StorageClient;
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.JasperRunManager;
@@ -15,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,6 +76,17 @@ public class FormService {
             JasperReport jasperReport = (JasperReport) JRLoader.loadObject(inputStream);
             return JasperRunManager.runReportToPdf(jasperReport, list, dataSource);
         }
+    }
+
+    public String uploadPdfFile(String uid, InputStream fileStream, String reportType, String fileName) {
+        Bucket bucket = StorageClient.getInstance().bucket();
+
+        String fullFileName = reportType + "_" + fileName + "_" + ".pdf";
+        String objectPath = "users/" + uid + "/"+ reportType + "/" + fileName;
+
+        Blob blob = bucket.create(objectPath, fileStream, "application/pdf");
+
+        return blob.signUrl(60, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature()).toString();
     }
 
 }
