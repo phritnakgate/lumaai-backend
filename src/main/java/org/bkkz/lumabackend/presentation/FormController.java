@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.bkkz.lumabackend.service.FormService;
 import org.bkkz.lumabackend.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,9 +47,12 @@ public class FormController {
 
             String reportType = "mis-task-report";
             String downloadUrl = formService.uploadPdfFile(uid, inputStream, reportType, reportYearMonth);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Location", downloadUrl);
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
 
-            return ResponseEntity.ok()
-                    .body(Map.of("result",downloadUrl));
+//            return ResponseEntity.ok()
+//                    .body(Map.of("result",downloadUrl));
         }catch(Exception e){
             return ResponseEntity.internalServerError()
                     .body(e.getMessage());
