@@ -36,8 +36,8 @@ public class FormController {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    @PostMapping(path = {"/generate-mis-task-report"})
-    public ResponseEntity<?> generateMisTaskReport(@RequestParam String reportYearMonth) {
+    @PostMapping(path = {"/generate-monthly-task-report"})
+    public ResponseEntity<?> generateMonthlyTaskReport(@RequestParam String reportYearMonth) {
         try{
             String uid = getCurrentUserId();
             List<Map<String, Object>> tasks = taskService.getTasksByDate(reportYearMonth).get();
@@ -45,7 +45,7 @@ public class FormController {
             byte[] report = formService.getMisTaskReport(reportYearMonth, tasks);
             InputStream inputStream = new ByteArrayInputStream(report);
 
-            String reportType = "mis-task-report";
+            String reportType = "monthly_task_report";
             String downloadUrl = formService.uploadPdfFile(uid, inputStream, reportType, reportYearMonth);
             HttpHeaders headers = new HttpHeaders();
             headers.add("Location", downloadUrl);
