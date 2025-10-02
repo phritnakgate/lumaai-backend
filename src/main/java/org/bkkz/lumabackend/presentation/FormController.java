@@ -48,11 +48,9 @@ public class FormController {
             headers.add("Location", downloadUrl);
             return new ResponseEntity<>(headers, HttpStatus.FOUND);
 
-//            return ResponseEntity.ok()
-//                    .body(Map.of("result",downloadUrl));
         }catch(Exception e){
             return ResponseEntity.internalServerError()
-                    .body(e.getMessage());
+                    .body(Map.of("error",e.getMessage()));
         }
 
     }
@@ -66,7 +64,19 @@ public class FormController {
                     .body(Map.of("result",forms));
         }catch(Exception e){
             return ResponseEntity.internalServerError()
-                    .body(e.getMessage());
+                    .body(Map.of("error",e.getMessage()));
+        }
+    }
+
+    @DeleteMapping(path = "/delete-form")
+    public ResponseEntity<?> deleteForm(@RequestParam String fileType, @RequestParam String fileName) {
+        try {
+            String path = "users/" + getCurrentUserId() + "/" + fileType + "/" + fileName;
+            formService.deleteUserReport(path);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        }catch(Exception e){
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error",e.getMessage()));
         }
     }
 }
