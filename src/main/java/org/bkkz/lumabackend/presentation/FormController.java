@@ -69,9 +69,9 @@ public class FormController {
     }
 
     @DeleteMapping(path = "/delete-form")
-    public ResponseEntity<?> deleteForm(@RequestParam String fileType, @RequestParam String fileName) {
+    public ResponseEntity<?> deleteForm(@RequestParam String formType, @RequestParam String fileName) {
         try {
-            String path = "users/" + getCurrentUserId() + "/" + fileType + "/" + fileName;
+            String path = "users/" + getCurrentUserId() + "/" + formType + "/" + fileName;
             formService.deleteUserReport(path);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }catch(Exception e){
