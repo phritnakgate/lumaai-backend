@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -192,8 +193,15 @@ public class FormService {
                 Map<String, Object> fileData = new HashMap<>();
                 fileData.put("fileName", fileName);
                 fileData.put("url", signedUrl.toString());
+                fileData.put("lastModified", blob.getUpdateTimeOffsetDateTime());
 
                 fileList.add(fileData);
+
+                fileList.sort((m1, m2) -> {
+                    OffsetDateTime time1 = (OffsetDateTime) m1.get("lastModified");
+                    OffsetDateTime time2 = (OffsetDateTime) m2.get("lastModified");
+                    return time2.compareTo(time1);
+                });
             }
 
         }catch(Exception e){
