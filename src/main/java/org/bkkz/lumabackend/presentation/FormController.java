@@ -63,7 +63,7 @@ public class FormController {
             String uid = getCurrentUserId();
             List<Map<String, Object>> forms = formService.getAllUserReports(uid, formType);
             return ResponseEntity.ok()
-                    .body(Map.of("result",forms));
+                    .body(Map.of("results",forms));
         }catch(Exception e){
             return ResponseEntity.internalServerError()
                     .body(e.getMessage());
