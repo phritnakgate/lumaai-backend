@@ -1,5 +1,6 @@
 package org.bkkz.lumabackend.service;
 
+import com.google.api.gax.paging.Page;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
@@ -16,6 +17,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +31,9 @@ public class FormService {
         int task_category_finished = 0;
     }
 
-    public byte[] getMisTaskReport(String reportYearMonth, List<Map<String, Object>> tasks) {
+    private final int BLOB_SIGNED_URL_EXPIRATION_MINUTES = 60;
+
+    public byte[] getMonthlyTaskReport(String reportYearMonth, List<Map<String, Object>> tasks) {
         try {
             Map<String, Object> parameterMap = new HashMap<>();
             int targetYr = Integer.parseInt(reportYearMonth.substring(0, 4));
@@ -166,7 +170,36 @@ public class FormService {
 
         Blob blob = bucket.create(objectPath, fileStream, "application/pdf");
 
-        return blob.signUrl(60, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature()).toString();
+        return blob.signUrl(BLOB_SIGNED_URL_EXPIRATION_MINUTES, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature()).toString();
+    }
+
+    public List<Map<String, Object>> getAllUserReports(String uid, String reportType) {
+        Bucket bucket = StorageClient.getInstance().bucket();
+        String prefix = "users/" + uid + "/" + reportType + "/";
+        List<Map<String, Object>> fileList = new ArrayList<>();
+        try{
+            Page<Blob> blobs = bucket.list(Storage.BlobListOption.prefix(prefix));
+            for (Blob blob : blobs.iterateAll()) {
+                String fullPath = blob.getName();
+                String fileName = fullPath.substring(prefix.length());
+
+                if (fileName.isEmpty()) {
+                    continue;
+                }
+
+                URL signedUrl = blob.signUrl(BLOB_SIGNED_URL_EXPIRATION_MINUTES, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature());
+
+                Map<String, Object> fileData = new HashMap<>();
+                fileData.put("fileName", fileName);
+                fileData.put("url", signedUrl.toString());
+
+                fileList.add(fileData);
+            }
+
+        }catch(Exception e){
+            return null;
+        }
+        return fileList;
     }
 
 }

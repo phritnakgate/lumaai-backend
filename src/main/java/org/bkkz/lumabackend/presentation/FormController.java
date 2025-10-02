@@ -8,10 +8,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -42,7 +39,7 @@ public class FormController {
             String uid = getCurrentUserId();
             List<Map<String, Object>> tasks = taskService.getTasksByDate(reportYearMonth).get();
 
-            byte[] report = formService.getMisTaskReport(reportYearMonth, tasks);
+            byte[] report = formService.getMonthlyTaskReport(reportYearMonth, tasks);
             InputStream inputStream = new ByteArrayInputStream(report);
 
             String reportType = "monthly_task_report";
@@ -58,5 +55,18 @@ public class FormController {
                     .body(e.getMessage());
         }
 
+    }
+
+    @GetMapping(path = "/forms")
+    public ResponseEntity<?> getForms(@RequestParam String formType) {
+        try{
+            String uid = getCurrentUserId();
+            List<Map<String, Object>> forms = formService.getAllUserReports(uid, formType);
+            return ResponseEntity.ok()
+                    .body(Map.of("result",forms));
+        }catch(Exception e){
+            return ResponseEntity.internalServerError()
+                    .body(e.getMessage());
+        }
     }
 }
