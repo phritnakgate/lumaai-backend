@@ -210,4 +210,16 @@ public class FormService {
         return fileList;
     }
 
+    public void deleteUserReport(String filePath){
+        try{
+            Bucket bucket = StorageClient.getInstance().bucket();
+            Blob blob = bucket.get(filePath);
+            if (blob != null) {
+                blob.delete();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
