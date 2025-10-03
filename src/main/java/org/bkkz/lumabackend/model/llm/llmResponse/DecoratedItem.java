@@ -8,5 +8,6 @@ public record DecoratedItem(
         String date,
         String time,
         String response,
-        String source
+        String source,
+        String text
 ) {}

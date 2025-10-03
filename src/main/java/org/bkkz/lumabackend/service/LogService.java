@@ -39,6 +39,9 @@ public class LogService {
         if(intent.contains("Plan")){
             mainIntent.add("Plan");
         }
+        if(intent.contains("genform")){
+            mainIntent.add("GenForm");
+        }
 
         reference.setValueAsync(Map.of(
                 "userId", userId,

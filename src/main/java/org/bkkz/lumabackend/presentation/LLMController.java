@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.bkkz.lumabackend.model.llm.LLMPromptRequest;
 import org.bkkz.lumabackend.model.llm.llmResponse.DecoratedItem;
 import org.bkkz.lumabackend.model.llm.llmResponse.LLMPromptResponse;
+import org.bkkz.lumabackend.service.FormService;
 import org.bkkz.lumabackend.service.LLMService;
 import org.bkkz.lumabackend.service.LogService;
 import org.bkkz.lumabackend.service.TaskService;
@@ -26,12 +27,14 @@ public class LLMController {
     private final WebClient llmWebClient;
     private final TaskService taskService;
     private final LogService logService;
+    private final FormService formService;
 
     @Autowired
-    public LLMController(WebClient llmWebClient, TaskService taskService, LogService logService) {
+    public LLMController(WebClient llmWebClient, TaskService taskService, LogService logService, FormService formService) {
         this.llmWebClient = llmWebClient;
         this.taskService = taskService;
         this.logService = logService;
+        this.formService = formService;
     }
 
     @PostMapping("/")
@@ -64,7 +67,7 @@ public class LLMController {
                 for(DecoratedItem item : response.decoratedInput().decorated()) {
                     System.out.println(item);
                     allIntents.addAll(item.intent());
-                    LLMService llmService = new LLMService(item, taskService);
+                    LLMService llmService = new LLMService(item, taskService, formService);
                     Map<String, List<Map<String, Object>>> serviceResponse = llmService.processIntent();
                     if (serviceResponse.containsKey("results")) {
                         resultsList.addAll(serviceResponse.get("results"));
@@ -79,7 +82,7 @@ public class LLMController {
 
             return ResponseEntity.status(HttpStatus.OK).body(finalResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
 

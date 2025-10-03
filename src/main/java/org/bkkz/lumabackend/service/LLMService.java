@@ -4,7 +4,11 @@ import org.bkkz.lumabackend.model.llm.llmResponse.DecoratedItem;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
 import org.bkkz.lumabackend.utils.LLMIntent;
+import org.bkkz.lumabackend.utils.StringUtil;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -17,14 +21,16 @@ public class LLMService {
 
     private final DecoratedItem decoratedItem;
     private final TaskService taskService;
+    private final FormService formService;
 
 
     private List<Map<String, Object>> userTasks;
     private Map<String, List<Map<String, Object>>> serviceResponse;
 
-    public LLMService(DecoratedItem decoratedItem, TaskService taskService) {
+    public LLMService(DecoratedItem decoratedItem, TaskService taskService, FormService formService) {
         this.decoratedItem = decoratedItem;
         this.taskService = taskService;
+        this.formService = formService;
         this.serviceResponse = new HashMap<>();
         this.serviceResponse.put("results", new ArrayList<>());
         this.serviceResponse.put("errors", new ArrayList<>());
@@ -66,7 +72,19 @@ public class LLMService {
                 ));
                 break;
             case PLAN:
-                // Logic for PLAN intent
+                serviceResponse.get("results").add(Map.of(
+                        "intent", "PLAN",
+                        "message", decoratedItem.response()
+                ));
+                break;
+            case GENFORM:
+                handleGenForm();
+                break;
+            default:
+                serviceResponse.get("errors").add(Map.of(
+                        "intent", "UNKNOWN",
+                        "message", "Unknown intent"
+                ));
                 break;
         }
 
@@ -233,6 +251,58 @@ public class LLMService {
         ZonedDateTime zonedDateTime = localDateTime.atZone(bangkokZoneId);
 
         return zonedDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
+    private void handleGenForm(){
+        String userRequest = decoratedItem.text();
+        String reportYm = "";
+        if(!userRequest.contains("สรุปงาน")){
+            serviceResponse.get("errors").add(Map.of(
+                    "intent", "GENFORM",
+                    "message", "ไม่รองรับคำขอสร้างฟอร์มนี้ครับ"
+            ));
+            return;
+        }
+        if(userRequest.contains("เดือนนี้")){
+            LocalDate today = LocalDate.now(ZoneId.of("Asia/Bangkok"));
+            reportYm = String.format("%04d-%02d", today.getYear(), today.getMonthValue());
+        }else{
+            for(Map.Entry<String, Integer> entry : StringUtil.THAI_MONTHS.entrySet()){
+                if(userRequest.contains(entry.getKey())){
+                    int month = entry.getValue();
+                    int year = Year.now(ZoneId.of("Asia/Bangkok")).getValue();
+                    var thaiYearMatcher = StringUtil.THAI_YEAR_PATTERN.matcher(userRequest);
+                    if(thaiYearMatcher.find()){
+                        year = Integer.parseInt(thaiYearMatcher.group(1)) - 543;
+                    }else{
+                        var yearMatcher = StringUtil.YEAR_PATTERN.matcher(userRequest);
+                        if(yearMatcher.find()){
+                            year = Integer.parseInt(yearMatcher.group(1));
+                        }
+                    }
+                    reportYm = String.format("%04d-%02d", year, month);
+                    break;
+                }
+            }
+        }
+        try{
+            System.out.println(reportYm);
+            String uid = SecurityContextHolder.getContext().getAuthentication().getName();
+            List<Map<String, Object>> tasks = taskService.getTasksByDate(reportYm).get();
+
+            byte[] report = formService.getMonthlyTaskReport(reportYm, tasks);
+            InputStream inputStream = new ByteArrayInputStream(report);
+
+            String reportType = "monthly_task_report";
+            String downloadUrl = formService.uploadPdfFile(uid, inputStream, reportType, reportYm);
+            serviceResponse.get("results").add(Map.of(
+                    "intent", "GENFORM",
+                    "message", downloadUrl
+            ));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 }

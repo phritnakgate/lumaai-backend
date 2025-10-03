@@ -9,7 +9,8 @@ public enum LLMIntent {
     REMOVE,
     SEARCH,
     GOOGLESEARCH,
-    PLAN;
+    PLAN,
+    GENFORM;
 
     public static LLMIntent fromString(@NotNull String intent) {
         try {
