@@ -20,6 +20,7 @@ public class FirebaseLocalConfig {
             System.setProperty("firebase.api-key", Objects.requireNonNull(dotenv.get("FIREBASE_API_KEY")));
             System.setProperty("firebase.database-url", Objects.requireNonNull(dotenv.get("FIREBASE_DATABASE_URL")));
             System.setProperty("firebase.bucket-name", Objects.requireNonNull(dotenv.get("FIREBASE_BUCKET_NAME")));
+            System.setProperty("vertex-ai.api-key", Objects.requireNonNull(dotenv.get("VERTEX_AI_API_KEY")));
         } catch (Exception e) {
             System.err.println("Could not load .env");
         }

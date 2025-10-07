@@ -284,7 +284,7 @@
 			<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
 			<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
 		</element>
-		<element kind="chart" chartType="bar" uuid="574f1b43-0240-49db-ab20-c293061ff771" x="253" y="479" width="292" height="200" showLegend="false" evaluationTime="Report" linkTarget="Self" printInFirstWholeBand="true">
+		<element kind="chart" chartType="bar" uuid="574f1b43-0240-49db-ab20-c293061ff771" x="260" y="480" width="292" height="200" showLegend="false" evaluationTime="Report" linkTarget="Self" printInFirstWholeBand="true">
 			<titleFont fontName="TH Sarabun New" fontSize="16.0" bold="true"/>
 			<titleExpression><![CDATA["จำนวนงานที่ทำเสร็จแต่ละสัปดาห์"]]></titleExpression>
 			<dataset kind="category">
@@ -334,18 +334,23 @@
 				<seriesColor order="4" color="#8979FF"/>
 			</plot>
 		</element>
-		<element kind="rectangle" uuid="d58a1e6e-bc7a-40b4-893e-d042f69921c4" mode="Opaque" x="1" y="490" width="249" height="189" forecolor="#FFFFFF" backcolor="#F6F3F0" radius="15">
+		<element kind="rectangle" uuid="d58a1e6e-bc7a-40b4-893e-d042f69921c4" mode="Opaque" x="1" y="480" width="259" height="199" forecolor="#FFFFFF" backcolor="#F6F3F0" radius="15">
 			<property name="com.jaspersoft.studio.unit.width" value="px"/>
 			<property name="com.jaspersoft.studio.unit.height" value="px"/>
 			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="staticText" uuid="8ab98548-9630-46d2-a76d-99cd33c3a34e" x="94" y="500" width="150" height="30" fontName="TH Sarabun New" fontSize="18.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+		<element kind="staticText" uuid="8ab98548-9630-46d2-a76d-99cd33c3a34e" x="60" y="480" width="198" height="30" fontName="TH Sarabun New" fontSize="18.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<paragraph rightIndent="10"/>
 			<text><![CDATA[ภาพรวมของเดือนนี้]]></text>
+			<property name="com.jaspersoft.studio.unit.rightIndent" value="px"/>
 		</element>
-		<element kind="textField" uuid="f0d4c0b0-9459-4a9c-85bc-d3bc8184055d" x="10" y="530" width="234" height="140" fontName="TH Sarabun New" fontSize="14.0">
+		<element kind="textField" uuid="f0d4c0b0-9459-4a9c-85bc-d3bc8184055d" x="1" y="510" width="258" height="169" fontName="TH Sarabun New" fontSize="12.0">
+			<paragraph leftIndent="3" rightIndent="3"/>
 			<expression><![CDATA[$P{task_analyze}]]></expression>
+			<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+			<property name="com.jaspersoft.studio.unit.rightIndent" value="px"/>
 		</element>
-		<element kind="image" uuid="8dec0d36-9cd5-4456-8c00-00c13238bef4" x="10" y="480" width="50" height="50" rotation="None">
+		<element kind="image" uuid="8dec0d36-9cd5-4456-8c00-00c13238bef4" x="10" y="460" width="50" height="50" rotation="None">
 			<expression><![CDATA[$P{icon_analyzed}]]></expression>
 		</element>
 		<element kind="textField" uuid="676c9b1e-27aa-46c6-9a4a-8f91512dd6ab" x="212" y="52" width="134" height="38" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="23.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
