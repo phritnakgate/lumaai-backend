@@ -2,8 +2,9 @@
 <jasperReport name="mis_task_report" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="74d3db46-545d-431a-975a-771b7c67d1fa">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<style name="Table_TH" mode="Opaque" backcolor="#3F7D5A">
+		<pen lineWidth="1.0" lineColor="#B8B2AD"/>
 		<box>
-			<pen lineWidth="0.5" lineColor="#000000"/>
+			<pen lineWidth="1.0" lineColor="#B8B2AD"/>
 			<topPen lineWidth="0.5" lineColor="#000000"/>
 			<leftPen lineWidth="0.5" lineColor="#000000"/>
 			<bottomPen lineWidth="0.5" lineColor="#000000"/>
@@ -11,21 +12,29 @@
 		</box>
 	</style>
 	<style name="Table_CH" mode="Opaque" backcolor="#698474">
+		<pen lineWidth="1.0" lineColor="#B8B2AD"/>
 		<box>
-			<pen lineWidth="0.5" lineColor="#000000"/>
-			<topPen lineWidth="0.5" lineColor="#000000"/>
-			<leftPen lineWidth="0.5" lineColor="#000000"/>
-			<bottomPen lineWidth="0.5" lineColor="#000000"/>
-			<rightPen lineWidth="0.5" lineColor="#000000"/>
+			<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+			<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+			<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+			<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+			<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
 		</box>
 	</style>
-	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+	<style name="Table_TD" mode="Opaque" backcolor="#F6F3F0">
+		<pen lineWidth="0.0" lineColor="#FFFFFF"/>
 		<box>
-			<pen lineWidth="0.5" lineColor="#000000"/>
-			<topPen lineWidth="0.5" lineColor="#000000"/>
-			<leftPen lineWidth="0.5" lineColor="#000000"/>
-			<bottomPen lineWidth="0.5" lineColor="#000000"/>
-			<rightPen lineWidth="0.5" lineColor="#000000"/>
+			<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+			<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+			<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+			<bottomPen lineWidth="0.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+			<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+		</box>
+	</style>
+	<style name="Table_TF" mode="Opaque" forecolor="#030303" backcolor="#F6F3F0" fontName="TH Sarabun New" fontSize="16.0">
+		<box>
+			<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+			<topPen lineWidth="0.0"/>
 		</box>
 	</style>
 	<dataset name="task_category" uuid="6627cb2c-9aae-4964-8345-431fb364a475">
@@ -71,76 +80,212 @@
 		<defaultValueExpression><![CDATA[0]]></defaultValueExpression>
 	</parameter>
 	<parameter name="task_monthly_list" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="task_analyze" class="java.lang.String"/>
+	<parameter name="icon_analyzed" class="java.io.InputStream"/>
 	<query language="sql"><![CDATA[]]></query>
 	<field name="task_category_title" class="java.lang.String"/>
 	<field name="task_category_all" class="java.lang.Integer"/>
 	<field name="task_category_finished" class="java.lang.Integer"/>
 	<group name="SummaryGraph"/>
 	<background splitType="Stretch"/>
-	<title height="284" splitType="Stretch">
-		<element kind="staticText" uuid="504a09d8-b6f8-464f-8360-6dabfe21f9a6" x="130" y="0" width="150" height="30" fontName="TH Sarabun New" fontSize="18.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[รายงานสรุปงานประจำเดือน ]]></text>
+	<title height="681" splitType="Stretch">
+		<element kind="rectangle" uuid="0b03ca22-f681-481d-8afd-d01fc5b071fc" mode="Opaque" x="50" y="80" width="456" height="170" forecolor="#FFFFFF" backcolor="#F6F3F0" radius="15">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="textField" uuid="37654e9b-6f5e-4b37-b006-31af907e5c70" x="280" y="0" width="150" height="30" fontName="TH Sarabun New" fontSize="18.0" bold="false" hTextAlign="Left" vTextAlign="Middle">
-			<expression><![CDATA[$P{task_report_month}]]></expression>
+		<element kind="textField" uuid="37654e9b-6f5e-4b37-b006-31af907e5c70" x="0" y="0" width="556" height="30" fontName="TH Sarabun New" fontSize="18.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA["รายงานสรุปงานประจำเดือน" + $P{task_report_month}]]></expression>
 		</element>
-		<element kind="staticText" uuid="cfae5424-f460-4b93-becb-b1dce4c76759" x="270" y="29" width="40" height="30" fontName="TH Sarabun New" fontSize="16.0" bold="true" vTextAlign="Middle">
-			<text><![CDATA[งาน จาก]]></text>
+		<element kind="rectangle" uuid="33342d82-7324-454e-b951-8e7c4d5c2894" mode="Opaque" x="50" y="50" width="136" height="67" forecolor="#FFFFFF" backcolor="#698474" radius="15">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="textField" uuid="676c9b1e-27aa-46c6-9a4a-8f91512dd6ab" x="220" y="29" width="50" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
-			<expression><![CDATA[$P{total_tasks_finished}]]></expression>
+		<element kind="staticText" uuid="d5a43c42-2c43-4957-9e34-7b7106b01bad" x="50" y="90" width="136" height="27" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
+			<text><![CDATA[งานทั้งหมดในเดือนนี้]]></text>
 		</element>
-		<element kind="staticText" uuid="919c8e2c-b450-4414-82ac-2639e1c6cc06" x="360" y="29" width="60" height="30" fontName="TH Sarabun New" fontSize="16.0" bold="true" vTextAlign="Middle">
-			<text><![CDATA[งาน คิดเป็น]]></text>
+		<element kind="rectangle" uuid="93cdfcdd-9195-4c04-9a25-e701b1e6414b" mode="Opaque" x="210" y="50" width="136" height="67" forecolor="#FFFFFF" backcolor="#DCA47C" radius="15">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="staticText" uuid="23c696ac-98f0-44d6-b192-4addb980ba26" x="100" y="29" width="120" height="30" fontName="TH Sarabun New" fontSize="16.0" bold="true" vTextAlign="Middle">
-			<text><![CDATA[เดือนนี้คุณทำงานสำเร็จไป]]></text>
+		<element kind="rectangle" uuid="a282f3c9-613d-42a9-8a4d-d5f66b6dff2a" mode="Opaque" x="370" y="50" width="136" height="67" forecolor="#FFFFFF" backcolor="#FFD3B6" radius="15">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="textField" uuid="16c4673f-4a6f-434e-bdba-c8c5e2c6b209" x="420" y="29" width="50" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
-			<expression><![CDATA[($P{total_tasks}.intValue() == 0) ? "0.00" : new java.text.DecimalFormat("#,##0.00").format(($P{total_tasks_finished}.floatValue()/$P{total_tasks}.floatValue())*100)]]></expression>
-		</element>
-		<element kind="staticText" uuid="52340c2a-d280-4744-8509-7eee8b53c83d" x="470" y="29" width="10" height="30" fontName="TH Sarabun New" fontSize="16.0" bold="true" vTextAlign="Middle">
-			<text><![CDATA[%]]></text>
-		</element>
-		<element kind="textField" uuid="7cb8933b-e820-4e1a-989b-ccc721ec4d9b" x="310" y="29" width="50" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
+		<element kind="textField" uuid="7cb8933b-e820-4e1a-989b-ccc721ec4d9b" x="50" y="52" width="136" height="38" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="23.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
 			<expression><![CDATA[$P{total_tasks}]]></expression>
 		</element>
-		<element kind="chart" chartType="pie" uuid="dcc84f4f-ffa7-45cc-846d-2a6886f748ab" x="10" y="80" width="250" height="200" showLegend="true" evaluationTime="Report" linkType="None" linkTarget="Self" legendPosition="Left">
-			<titleFont fontName="TH Sarabun New" fontSize="16.0"/>
+		<element kind="staticText" uuid="28207446-848d-44ae-9cf7-8fef7ca2eaad" x="211" y="90" width="136" height="24" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
+			<text><![CDATA[งานที่สำเร็จในเดือนนี้]]></text>
+		</element>
+		<element kind="textField" uuid="16c4673f-4a6f-434e-bdba-c8c5e2c6b209" x="370" y="50" width="136" height="40" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="23.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[($P{total_tasks}.intValue() == 0) ? "0.00%" : new java.text.DecimalFormat("#,##0.00").format(($P{total_tasks_finished}.floatValue()/$P{total_tasks}.floatValue())*100) + "%"]]></expression>
+		</element>
+		<element kind="staticText" uuid="19f258ec-94fe-41ba-ad5e-ec58c8394a28" x="370" y="90" width="136" height="24" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
+			<text><![CDATA[% ที่สำเร็จ]]></text>
+		</element>
+		<element kind="ellipse" uuid="d32a0503-d724-4b69-9d85-056c9eeb790a" x="140" y="140" width="70" height="70" forecolor="#B8B2AD" backcolor="#B8B2AD">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="textField" uuid="ce8b8d64-8821-4bfb-973d-1c32a0ed4753" x="150" y="150" width="50" height="50" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="24.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{total_task_p_high}]]></expression>
+		</element>
+		<element kind="staticText" uuid="ba0f2e53-59bb-45cf-960e-3a8956fd2f62" x="140" y="213" width="70" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
+			<text><![CDATA[เร่งด่วนมาก]]></text>
+		</element>
+		<element kind="ellipse" uuid="767fb87c-3a47-4275-8a9d-764e7cb1291e" x="244" y="140" width="70" height="70" forecolor="#B8B2AD" backcolor="#B8B2AD">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="textField" uuid="7033d440-e425-4c05-abbb-466ebcd7ae84" x="253" y="150" width="50" height="50" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="24.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{total_task_p_med}]]></expression>
+		</element>
+		<element kind="staticText" uuid="9cca90f5-7fd6-442c-9a81-714f0c431741" x="240" y="213" width="78" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
+			<text><![CDATA[เร่งด่วนปานกลาง]]></text>
+		</element>
+		<element kind="staticText" uuid="b70dedbb-78bb-40da-a508-5b561f634212" x="346" y="213" width="70" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
+			<text><![CDATA[ไม่เร่งด่วน]]></text>
+		</element>
+		<element kind="ellipse" uuid="7b5ab3f8-ae00-477e-9e2d-38d07e757429" x="346" y="140" width="70" height="70" forecolor="#B8B2AD" backcolor="#B8B2AD">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="textField" uuid="be80e1c7-c5e6-4852-a85e-60f2e65e4186" x="356" y="150" width="50" height="50" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="24.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{total_task_p_low}]]></expression>
+		</element>
+		<element kind="chart" chartType="pie" uuid="51091ad1-ebdf-40ba-9881-2ff203bb6f85" x="0" y="279" width="250" height="200" showLegend="true" evaluationTime="Report" linkType="None" linkTarget="Self" legendPosition="Left">
+			<titleFont fontName="TH Sarabun New" fontSize="16.0" bold="true"/>
 			<legendFont fontName="TH Sarabun New" fontSize="10.0"/>
 			<titleExpression><![CDATA["งานที่ทำสำเร็จแต่ละประเภท"]]></titleExpression>
 			<dataset kind="pie">
 				<otherSectionHyperlink linkTarget="Self"/>
 				<series>
-					<keyExpression><![CDATA["งาน"]]></keyExpression>
+					<keyExpression><![CDATA["Coding"]]></keyExpression>
 					<valueExpression><![CDATA[$P{total_task_finish_t0}]]></valueExpression>
 					<sectionHyperlink linkTarget="Self"/>
 				</series>
 				<series>
-					<keyExpression><![CDATA["การเรียนรู้"]]></keyExpression>
+					<keyExpression><![CDATA["ประชุม"]]></keyExpression>
 					<valueExpression><![CDATA[$P{total_task_finish_t1}]]></valueExpression>
 				</series>
 				<series>
-					<keyExpression><![CDATA["ส่วนตัว"]]></keyExpression>
+					<keyExpression><![CDATA["อบรม"]]></keyExpression>
 					<valueExpression><![CDATA[$P{total_task_finish_t2}]]></valueExpression>
 				</series>
 				<series>
-					<keyExpression><![CDATA["สุขภาพ"]]></keyExpression>
+					<keyExpression><![CDATA["POC"]]></keyExpression>
 					<valueExpression><![CDATA[$P{total_task_finish_t3}]]></valueExpression>
 				</series>
 				<series>
-					<keyExpression><![CDATA["การเงิน"]]></keyExpression>
+					<keyExpression><![CDATA["อื่นๆ"]]></keyExpression>
 					<valueExpression><![CDATA[$P{total_task_finish_t4}]]></valueExpression>
 				</series>
 			</dataset>
-			<plot circular="true" showLabels="true">
+			<plot orientation="Horizontal" circular="true" showLabels="true">
 				<itemLabel>
 					<font fontName="TH Sarabun New" fontSize="10.0"/>
 				</itemLabel>
+				<seriesColor order="0" color="#8979FF"/>
+				<seriesColor order="1" color="#FF928A"/>
+				<seriesColor order="2" color="#3CC3DF"/>
+				<seriesColor order="3" color="#FFAE4C"/>
+				<seriesColor order="4" color="#537FF1"/>
 			</plot>
 		</element>
-		<element kind="chart" chartType="bar" uuid="574f1b43-0240-49db-ab20-c293061ff771" x="260" y="80" width="300" height="200" showLegend="false" evaluationTime="Report" linkTarget="Self" printInFirstWholeBand="true">
-			<titleFont fontName="TH Sarabun New" fontSize="16.0"/>
+		<element kind="component" uuid="de05fe26-58b3-4a60-b6e5-a08ad86e5aff" mode="Transparent" x="280" y="280" width="262" height="60" forecolor="#FFFFFF" backcolor="#F6F3F0" style="Table_TD">
+			<component kind="table">
+				<datasetRun uuid="d1b09016-53c0-43c6-9d4b-06c50cf0f138" subDataset="task_category">
+					<dataSourceExpression><![CDATA[$P{task_by_category}]]></dataSourceExpression>
+				</datasetRun>
+				<column kind="single" uuid="8817ed51-cee6-4fd6-9711-1eda45537882" width="130">
+					<tableFooter height="1" rowSpan="1" style="Table_TF">
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</tableFooter>
+					<columnHeader height="30" style="Table_CH">
+						<element kind="staticText" uuid="311dd0c3-9774-4696-9af2-ba4066f16773" x="0" y="0" width="130" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+							<text><![CDATA[ประเภทงาน]]></text>
+							<box>
+								<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+								<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+							</box>
+						</element>
+					</columnHeader>
+					<detailCell height="30" style="Table_TD">
+						<element kind="textField" uuid="0cd6ad51-a532-4b75-b976-48f088f3cc0c" x="0" y="0" width="130" height="30" fontName="TH Sarabun New" fontSize="16.0" vTextAlign="Middle">
+							<expression><![CDATA[$F{task_category_title}]]></expression>
+							<box topPadding="0" leftPadding="5" bottomPadding="0" rightPadding="0">
+								<leftPen lineWidth="1.0" lineColor="#B8B2AD"/>
+								<rightPen lineWidth="1.0" lineColor="#B8B2AD"/>
+							</box>
+						</element>
+					</detailCell>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
+				</column>
+				<column kind="single" uuid="6fd33139-e1ac-48e3-962a-bdad34c896b1" width="66">
+					<tableFooter height="1" rowSpan="1" style="Table_TF"/>
+					<columnHeader height="30" style="Table_CH">
+						<element kind="staticText" uuid="5cca1793-59b0-44a2-950a-728c4960bffa" x="0" y="0" width="66" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+							<text><![CDATA[งานทั้งหมด]]></text>
+							<box>
+								<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+								<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+							</box>
+						</element>
+					</columnHeader>
+					<detailCell height="30" style="Table_TD">
+						<element kind="textField" uuid="8c38f93d-cc74-4489-a42d-a356d4220571" x="0" y="0" width="66" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
+							<expression><![CDATA[$F{task_category_all}]]></expression>
+							<box>
+								<leftPen lineWidth="1.0" lineColor="#B8B2AD"/>
+								<rightPen lineWidth="1.0" lineColor="#B8B2AD"/>
+							</box>
+						</element>
+					</detailCell>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
+				</column>
+				<column kind="single" uuid="260b50f5-fefa-4c70-9b95-510218842ff4" width="66">
+					<tableFooter height="1" rowSpan="1" style="Table_TF"/>
+					<columnHeader height="30" style="Table_CH">
+						<element kind="staticText" uuid="6a45a53d-78b7-4578-beb1-06c25ba53679" x="0" y="0" width="66" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+							<text><![CDATA[งานที่สำเร็จ]]></text>
+							<box>
+								<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+								<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<leftPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+								<rightPen lineWidth="1.0" lineStyle="Solid" lineColor="#B8B2AD"/>
+							</box>
+						</element>
+					</columnHeader>
+					<detailCell height="30" style="Table_TD">
+						<element kind="textField" uuid="414d871c-7190-4913-b408-53ea1b95a706" x="0" y="0" width="66" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
+							<expression><![CDATA[$F{task_category_finished}]]></expression>
+							<box>
+								<leftPen lineWidth="1.0" lineColor="#B8B2AD"/>
+								<rightPen lineWidth="1.0" lineColor="#B8B2AD"/>
+							</box>
+						</element>
+					</detailCell>
+					<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
+				</column>
+			</component>
+			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
+			<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
+			<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
+			<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
+		</element>
+		<element kind="chart" chartType="bar" uuid="574f1b43-0240-49db-ab20-c293061ff771" x="260" y="480" width="292" height="200" showLegend="false" evaluationTime="Report" linkTarget="Self" printInFirstWholeBand="true">
+			<titleFont fontName="TH Sarabun New" fontSize="16.0" bold="true"/>
 			<titleExpression><![CDATA["จำนวนงานที่ทำเสร็จแต่ละสัปดาห์"]]></titleExpression>
 			<dataset kind="category">
 				<series>
@@ -182,102 +327,55 @@
 				<itemLabel>
 					<font fontName="TH Sarabun New" fontSize="10.0"/>
 				</itemLabel>
+				<seriesColor order="0" color="#8979FF"/>
+				<seriesColor order="1" color="#8979FF"/>
+				<seriesColor order="2" color="#8979FF"/>
+				<seriesColor order="3" color="#8979FF"/>
+				<seriesColor order="4" color="#8979FF"/>
 			</plot>
+		</element>
+		<element kind="rectangle" uuid="d58a1e6e-bc7a-40b4-893e-d042f69921c4" mode="Opaque" x="1" y="480" width="259" height="199" forecolor="#FFFFFF" backcolor="#F6F3F0" radius="15">
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="8ab98548-9630-46d2-a76d-99cd33c3a34e" x="60" y="480" width="198" height="30" fontName="TH Sarabun New" fontSize="18.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<paragraph rightIndent="10"/>
+			<text><![CDATA[ภาพรวมของเดือนนี้]]></text>
+			<property name="com.jaspersoft.studio.unit.rightIndent" value="px"/>
+		</element>
+		<element kind="textField" uuid="f0d4c0b0-9459-4a9c-85bc-d3bc8184055d" x="1" y="510" width="258" height="169" fontName="TH Sarabun New" fontSize="12.0">
+			<paragraph leftIndent="3" rightIndent="3"/>
+			<expression><![CDATA[$P{task_analyze}]]></expression>
+			<property name="com.jaspersoft.studio.unit.leftIndent" value="px"/>
+			<property name="com.jaspersoft.studio.unit.rightIndent" value="px"/>
+		</element>
+		<element kind="image" uuid="8dec0d36-9cd5-4456-8c00-00c13238bef4" x="10" y="460" width="50" height="50" rotation="None">
+			<expression><![CDATA[$P{icon_analyzed}]]></expression>
+		</element>
+		<element kind="textField" uuid="676c9b1e-27aa-46c6-9a4a-8f91512dd6ab" x="212" y="52" width="134" height="38" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="23.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA[$P{total_tasks_finished}]]></expression>
 		</element>
 		<property name="com.jaspersoft.studio.unit.height" value="px"/>
 	</title>
 	<pageHeader height="15" splitType="Stretch"/>
-	<columnHeader height="15" splitType="Stretch">
+	<columnHeader height="21" splitType="Stretch">
 		<property name="com.jaspersoft.studio.unit.height" value="px"/>
 	</columnHeader>
 	<detail>
-		<band height="299" splitType="Stretch">
-			<element kind="staticText" uuid="518905de-66e7-4d85-8a67-344c246ed20f" x="310" y="0" width="242" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
-				<text><![CDATA[ในเดือนนี้คุณให้เวลาไปกับงานที่มีความสำคัญ]]></text>
-			</element>
-			<element kind="staticText" uuid="ba0f2e53-59bb-45cf-960e-3a8956fd2f62" x="380" y="40" width="30" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
-				<text><![CDATA[สูง]]></text>
-			</element>
-			<element kind="staticText" uuid="4299dd5a-5851-4ff3-98d8-e7ed0c4ef3c6" x="380" y="98" width="30" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
-				<text><![CDATA[กลาง]]></text>
-			</element>
-			<element kind="staticText" uuid="b70dedbb-78bb-40da-a508-5b561f634212" x="500" y="70" width="30" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center">
-				<text><![CDATA[ต่ำ]]></text>
-			</element>
-			<element kind="ellipse" uuid="d32a0503-d724-4b69-9d85-056c9eeb790a" x="310" y="30" width="50" height="50" forecolor="#E07373" backcolor="#E07373">
-				<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			</element>
-			<element kind="textField" uuid="ce8b8d64-8821-4bfb-973d-1c32a0ed4753" x="310" y="30" width="50" height="50" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-				<expression><![CDATA[$P{total_task_p_high}]]></expression>
-			</element>
-			<element kind="ellipse" uuid="767fb87c-3a47-4275-8a9d-764e7cb1291e" x="310" y="91" width="50" height="50" forecolor="#DCA47C" backcolor="#DCA47C">
-				<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			</element>
-			<element kind="textField" uuid="7033d440-e425-4c05-abbb-466ebcd7ae84" x="310" y="91" width="50" height="50" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-				<expression><![CDATA[$P{total_task_p_med}]]></expression>
-			</element>
-			<element kind="ellipse" uuid="7b5ab3f8-ae00-477e-9e2d-38d07e757429" x="440" y="53" width="50" height="50" forecolor="#FFD3B6" backcolor="#FFD3B6">
-				<property name="com.jaspersoft.studio.unit.width" value="px"/>
-			</element>
-			<element kind="textField" uuid="be80e1c7-c5e6-4852-a85e-60f2e65e4186" x="440" y="53" width="50" height="50" forecolor="#030303" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-				<expression><![CDATA[$P{total_task_p_low}]]></expression>
-			</element>
-			<element kind="component" uuid="de05fe26-58b3-4a60-b6e5-a08ad86e5aff" x="0" y="0" width="270" height="61">
-				<component kind="table">
-					<datasetRun uuid="d1b09016-53c0-43c6-9d4b-06c50cf0f138" subDataset="task_category">
-						<dataSourceExpression><![CDATA[$P{task_by_category}]]></dataSourceExpression>
-					</datasetRun>
-					<column kind="single" uuid="8817ed51-cee6-4fd6-9711-1eda45537882" width="130">
-						<columnHeader height="30" style="Table_CH">
-							<element kind="staticText" uuid="311dd0c3-9774-4696-9af2-ba4066f16773" x="0" y="0" width="130" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-								<text><![CDATA[ประเภทงาน]]></text>
-							</element>
-						</columnHeader>
-						<detailCell height="30" style="Table_TD">
-							<element kind="textField" uuid="0cd6ad51-a532-4b75-b976-48f088f3cc0c" x="0" y="0" width="130" height="30" fontName="TH Sarabun New" fontSize="14.0" vTextAlign="Middle">
-								<expression><![CDATA[$F{task_category_title}]]></expression>
-							</element>
-						</detailCell>
-					</column>
-					<column kind="single" uuid="6fd33139-e1ac-48e3-962a-bdad34c896b1" width="66">
-						<columnHeader height="30" style="Table_CH">
-							<element kind="staticText" uuid="5cca1793-59b0-44a2-950a-728c4960bffa" x="0" y="0" width="66" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-								<text><![CDATA[งานทั้งหมด]]></text>
-							</element>
-						</columnHeader>
-						<detailCell height="30" style="Table_TD">
-							<element kind="textField" uuid="8c38f93d-cc74-4489-a42d-a356d4220571" x="0" y="0" width="66" height="30" fontName="TH Sarabun New" fontSize="14.0" hTextAlign="Center" vTextAlign="Middle">
-								<expression><![CDATA[$F{task_category_all}]]></expression>
-							</element>
-						</detailCell>
-					</column>
-					<column kind="single" uuid="260b50f5-fefa-4c70-9b95-510218842ff4" width="66">
-						<columnHeader height="30" style="Table_CH">
-							<element kind="staticText" uuid="6a45a53d-78b7-4578-beb1-06c25ba53679" x="0" y="0" width="66" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-								<text><![CDATA[งานที่สำเร็จ]]></text>
-							</element>
-						</columnHeader>
-						<detailCell height="30" style="Table_TD">
-							<element kind="textField" uuid="414d871c-7190-4913-b408-53ea1b95a706" x="0" y="0" width="66" height="30" fontName="TH Sarabun New" fontSize="14.0" hTextAlign="Center" vTextAlign="Middle">
-								<expression><![CDATA[$F{task_category_finished}]]></expression>
-							</element>
-						</detailCell>
-					</column>
-				</component>
-				<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.VerticalRowLayout"/>
-				<property name="com.jaspersoft.studio.table.style.table_header" value="Table_TH"/>
-				<property name="com.jaspersoft.studio.table.style.column_header" value="Table_CH"/>
-				<property name="com.jaspersoft.studio.table.style.detail" value="Table_TD"/>
-			</element>
-			<element kind="staticText" uuid="49c6c45e-ee05-4376-b6f1-80dcebee5517" x="202" y="170" width="150" height="30" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+		<band height="114" splitType="Stretch">
+			<element kind="staticText" uuid="49c6c45e-ee05-4376-b6f1-80dcebee5517" x="206" y="0" width="150" height="30" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
 				<text><![CDATA[รายการงานที่ทำสำเร็จในเดือนนี้]]></text>
 			</element>
-			<element kind="component" uuid="b3317e3d-de30-460f-85fb-b03b32b38187" x="4" y="200" width="546" height="60">
+			<element kind="component" uuid="b3317e3d-de30-460f-85fb-b03b32b38187" x="10" y="30" width="546" height="60" style="Table_TD">
 				<component kind="table">
 					<datasetRun uuid="1c6ae2d4-794c-4016-944e-6076e4100a2d" subDataset="task_monthly_list_dataset">
 						<dataSourceExpression><![CDATA[$P{task_monthly_list} ]]></dataSourceExpression>
 					</datasetRun>
 					<column kind="single" uuid="be5ff7c9-4fc6-4105-9f6c-1d3f42451dea" width="150">
+						<tableFooter height="1" rowSpan="1" style="Table_TF">
+							<property name="com.jaspersoft.studio.unit.height" value="px"/>
+						</tableFooter>
 						<columnHeader height="30" rowSpan="1" style="Table_CH">
 							<element kind="staticText" uuid="d8999c02-b97c-4099-afd2-1f8ee9e98a4b" x="0" y="0" width="150" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
 								<text><![CDATA[ชื่องาน]]></text>
@@ -286,24 +384,40 @@
 						<detailCell height="30" style="Table_TD">
 							<element kind="textField" uuid="e454938d-14b1-4bd1-8455-c8e59839f5ae" x="0" y="0" width="150" height="30" fontName="TH Sarabun New" fontSize="16.0" vTextAlign="Middle">
 								<expression><![CDATA[$F{name}]]></expression>
+								<box leftPadding="5">
+									<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+									<topPen lineWidth="0.0"/>
+									<leftPen lineWidth="1.0"/>
+									<bottomPen lineWidth="0.0"/>
+									<rightPen lineWidth="1.0"/>
+								</box>
 							</element>
 						</detailCell>
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column1"/>
 					</column>
-					<column kind="single" uuid="e5a34ffb-d714-41d1-b040-5467777787a2" width="180">
+					<column kind="single" uuid="e5a34ffb-d714-41d1-b040-5467777787a2" width="160">
+						<tableFooter height="1" rowSpan="1" style="Table_TF"/>
 						<columnHeader height="30" rowSpan="1" style="Table_CH">
-							<element kind="staticText" uuid="8592c90e-aba5-454d-bdc1-094ade9dbb41" x="0" y="0" width="180" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+							<element kind="staticText" uuid="8592c90e-aba5-454d-bdc1-094ade9dbb41" x="0" y="0" width="160" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
 								<text><![CDATA[รายละเอียดงาน]]></text>
 							</element>
 						</columnHeader>
 						<detailCell height="30" style="Table_TD">
-							<element kind="textField" uuid="f6a41f93-27a2-4e5d-8cf6-a80a40a95c53" x="0" y="0" width="180" height="30" fontName="TH Sarabun New" fontSize="16.0" vTextAlign="Middle">
+							<element kind="textField" uuid="f6a41f93-27a2-4e5d-8cf6-a80a40a95c53" x="0" y="0" width="160" height="30" fontName="TH Sarabun New" fontSize="16.0" vTextAlign="Middle">
 								<expression><![CDATA[$F{description}]]></expression>
+								<box leftPadding="5">
+									<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+									<topPen lineWidth="0.0"/>
+									<leftPen lineWidth="1.0"/>
+									<bottomPen lineWidth="0.0"/>
+									<rightPen lineWidth="1.0"/>
+								</box>
 							</element>
 						</detailCell>
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column2"/>
 					</column>
 					<column kind="single" uuid="8903e057-0c25-4281-964a-6c1ec84f11fe" width="70">
+						<tableFooter height="1" rowSpan="1" style="Table_TF"/>
 						<columnHeader height="30" rowSpan="1" style="Table_CH">
 							<element kind="staticText" uuid="530d8d51-407c-4cc2-a413-7f2ec82b196e" x="0" y="0" width="70" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
 								<text><![CDATA[วันที่]]></text>
@@ -312,11 +426,19 @@
 						<detailCell height="30" style="Table_TD">
 							<element kind="textField" uuid="64f02b36-7b6d-4a96-a50d-a009b0a741f8" x="0" y="0" width="70" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
 								<expression><![CDATA[new SimpleDateFormat("dd/MM/yyyy").format($F{dateTime})]]></expression>
+								<box>
+									<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+									<topPen lineWidth="0.0"/>
+									<leftPen lineWidth="1.0"/>
+									<bottomPen lineWidth="0.0"/>
+									<rightPen lineWidth="1.0"/>
+								</box>
 							</element>
 						</detailCell>
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column3"/>
 					</column>
 					<column kind="single" uuid="0d3df716-3458-494e-854a-f8fa1772d5bd" width="70">
+						<tableFooter height="1" rowSpan="1" style="Table_TF"/>
 						<columnHeader height="30" rowSpan="1" style="Table_CH">
 							<element kind="staticText" uuid="83f84aa3-f8d4-4c5f-ab34-07fb0a5e5d6b" x="0" y="0" width="70" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
 								<text><![CDATA[ประเภท]]></text>
@@ -324,24 +446,39 @@
 						</columnHeader>
 						<detailCell height="30" style="Table_TD">
 							<element kind="textField" uuid="20c726e8-bd86-4314-88af-ccd1abb6e4c1" x="0" y="0" width="70" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
-								<expression><![CDATA[$F{category}.intValue() == 0 ? "งาน" :
- $F{category}.intValue() == 1 ? "การเรียนรู้" : 
- $F{category}.intValue() == 2 ? "ส่วนตัว" : 
- $F{category}.intValue() == 3 ? "สุขภาพ" : "การเงิน"]]></expression>
+								<expression><![CDATA[$F{category}.intValue() == 0 ? "Coding" :
+ $F{category}.intValue() == 1 ? "ประชุม" : 
+ $F{category}.intValue() == 2 ? "อบรม" : 
+ $F{category}.intValue() == 3 ? "POC" : "อื่นๆ"]]></expression>
+								<box>
+									<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+									<topPen lineWidth="0.0"/>
+									<leftPen lineWidth="1.0"/>
+									<bottomPen lineWidth="0.0"/>
+									<rightPen lineWidth="1.0"/>
+								</box>
 							</element>
 						</detailCell>
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column4"/>
 					</column>
-					<column kind="single" uuid="c80985de-9ed2-48f3-bf61-c0167d7fc0a5" width="76">
+					<column kind="single" uuid="c80985de-9ed2-48f3-bf61-c0167d7fc0a5" width="96">
+						<tableFooter height="1" rowSpan="1" style="Table_TF"/>
 						<columnHeader height="30" rowSpan="1" style="Table_CH">
-							<element kind="staticText" uuid="4333aee8-a53e-410b-b325-42935041693f" x="0" y="0" width="76" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-								<text><![CDATA[ความสำคัญ]]></text>
+							<element kind="staticText" uuid="4333aee8-a53e-410b-b325-42935041693f" x="0" y="0" width="96" height="30" forecolor="#FFFFFF" fontName="TH Sarabun New" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+								<text><![CDATA[ความเร่งด่วน]]></text>
 							</element>
 						</columnHeader>
 						<detailCell height="30" style="Table_TD">
-							<element kind="textField" uuid="d3428675-a07f-4ec9-962d-b0af39b45988" x="0" y="0" width="76" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
-								<expression><![CDATA[$F{priority}.intValue() == 0 ? "สูง" : 
-$F{priority}.intValue() == 1 ? "กลาง" : "ต่ำ"]]></expression>
+							<element kind="textField" uuid="d3428675-a07f-4ec9-962d-b0af39b45988" x="0" y="0" width="96" height="30" fontName="TH Sarabun New" fontSize="16.0" hTextAlign="Center" vTextAlign="Middle">
+								<expression><![CDATA[$F{priority}.intValue() == 0 ? "เร่งด่วน" : 
+$F{priority}.intValue() == 1 ? "เร่งด่วนปานกลาง" : "ไม่เร่งด่วน"]]></expression>
+								<box>
+									<pen lineWidth="1.0" lineColor="#B8B2AD"/>
+									<topPen lineWidth="0.0"/>
+									<leftPen lineWidth="1.0"/>
+									<bottomPen lineWidth="0.0"/>
+									<rightPen lineWidth="1.0"/>
+								</box>
 							</element>
 						</detailCell>
 						<property name="com.jaspersoft.studio.components.table.model.column.name" value="Column5"/>

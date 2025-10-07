@@ -1,11 +1,11 @@
 package org.bkkz.lumabackend.utils;
 
 public enum TaskCategory {
-    WORK(0,"งาน"),
-    LEARNING(1,"การเรียนรู้"),
-    PERSONAL(2,"ส่วนตัว"),
-    HEALTH(3,"สุขภาพ"),
-    FINANCE(4,"การเงิน");
+    WORK(0,"Coding"),
+    LEARNING(1,"ประชุม"),
+    PERSONAL(2,"อบรม"),
+    HEALTH(3,"POC"),
+    FINANCE(4,"อื่นๆ");
 
     private final int id;
     private final String name;

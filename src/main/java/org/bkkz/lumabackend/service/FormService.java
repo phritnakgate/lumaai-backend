@@ -5,6 +5,8 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.firebase.cloud.StorageClient;
+import com.google.genai.Client;
+import com.google.genai.types.GenerateContentResponse;
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JREmptyDataSource;
 import net.sf.jasperreports.engine.JasperReport;
@@ -13,6 +15,7 @@ import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
 import net.sf.jasperreports.engine.util.JRLoader;
 import org.bkkz.lumabackend.utils.TaskCategory;
 import org.bkkz.lumabackend.utils.ThaiMonth;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +30,13 @@ import java.util.stream.Collectors;
 @Service
 public class FormService {
 
+    private final Client vertexAIClient;
+
+    @Autowired
+    public FormService(Client vertexAIClient) {
+        this.vertexAIClient = vertexAIClient;
+    }
+
     static class CategoryStats{
         int task_category_all = 0;
         int task_category_finished = 0;
@@ -37,9 +47,13 @@ public class FormService {
     public byte[] getMonthlyTaskReport(String reportYearMonth, List<Map<String, Object>> tasks) {
         try {
             Map<String, Object> parameterMap = new HashMap<>();
+            Map<String, Object> dataToAnalyze = new HashMap<>();
+
+            //Report Title
             int targetYr = Integer.parseInt(reportYearMonth.substring(0, 4));
             String inputMonthToThai = ThaiMonth.toThaiName(reportYearMonth.substring(reportYearMonth.length() - 2)) + " " + (targetYr + 543);
 
+            //Sum Task By Week
             Map<Integer, Integer> weeklyCounts = tasks.stream()
                     .map(task -> task.get("dateTime"))
                     .filter(obj -> obj instanceof String)
@@ -123,19 +137,35 @@ public class FormService {
 
                 taskByCategory.add(row);
             }
-//            Map<String, Object> emptyRow = new HashMap<>();
-//            emptyRow.put("task_category_title","");
-//            emptyRow.put("task_category_all", 0);
-//            emptyRow.put("task_category_finished", 0);
-//            taskByCategory.add(0, emptyRow);
+
             System.out.println(taskByCategory);
             System.out.println(parameterMap);
             JRMapCollectionDataSource taskByCategoryDataSource = new JRMapCollectionDataSource((Collection<Map<String, ?>>)(Collection<?>) taskByCategory);
 
+            InputStream ic = Thread.currentThread().getContextClassLoader().getResourceAsStream("images/ic_idea.png");
+
+            int completedTasks = (int) tasks.stream().filter(task -> Boolean.TRUE.equals(task.get("isFinished"))).count();
+
+            //Analyze Report Data with Vertex AI
+            dataToAnalyze.put("reportMonth", inputMonthToThai);
+            dataToAnalyze.put("overallStats", Map.of(
+                    "totalTasks", tasks.size(),
+                    "completedTasks", completedTasks,
+                    "completionRate", tasks.isEmpty() ? 0 : (completedTasks * 100 / tasks.size())
+            ));
+            dataToAnalyze.put("completedByPriority", Map.of(
+                    "high", total_task_p_high,
+                    "medium", total_task_p_med,
+                    "low", total_task_p_low
+            ));
+            dataToAnalyze.put("completedByWeek", weeklyCounts);
+            dataToAnalyze.put("completedByCategory", taskByCategory);
+
+            System.out.println(dataToAnalyze);
 
             parameterMap.put("task_report_month", inputMonthToThai);
             parameterMap.put("total_tasks", tasks.size());
-            parameterMap.put("total_tasks_finished",(int) tasks.stream().filter(task -> Boolean.TRUE.equals(task.get("isFinished"))).count());
+            parameterMap.put("total_tasks_finished",completedTasks);
             parameterMap.put("total_task_w1", weeklyCounts.getOrDefault(1, 0));
             parameterMap.put("total_task_w2", weeklyCounts.getOrDefault(2, 0));
             parameterMap.put("total_task_w3", weeklyCounts.getOrDefault(3, 0));
@@ -146,6 +176,8 @@ public class FormService {
             parameterMap.put("total_task_p_med", total_task_p_med);
             parameterMap.put("total_task_p_low", total_task_p_low);
             parameterMap.put("task_monthly_list", taskDataSource);
+            parameterMap.put("icon_analyzed", ic);
+            parameterMap.put("task_analyze",analyzeReportData(dataToAnalyze));
 
             return generateReport("reports/mis_task_report_monthly_p1.jasper", parameterMap, new JREmptyDataSource());
 
@@ -219,6 +251,32 @@ public class FormService {
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private String analyzeReportData(Map<String, Object> dataToAnalyze){
+
+        try{
+            String prompt = "คุณคือ AI ผู้ช่วยวิเคราะห์ประสิทธิภาพการทำงานที่มีความเชี่ยวชาญ\n\n" +
+                    "จากข้อมูลสรุปการทำงานประจำเดือนในรูปแบบ JSON ต่อไปนี้:\n" +
+                    dataToAnalyze + "\n\n" +
+                    "จงทำการวิเคราะห์การทำงานของผู้ใช้ในเดือนนี้อย่างละเอียด โดยแบ่งการวิเคราะห์ออกเป็นหัวข้อต่อไปนี้ แล้วสรุปมาเป็นย่อหน้าเดียวความยาวไม่เกิน 4 บรรทัด A4 โดยแทนผู้ใช้เป็น คุณ ในตอนตอบกลับ:\n\n" +
+                    "1. **สรุปภาพรวม (Overall Summary):** สรุปผลการทำงานโดยรวม บอกถึงจุดเด่นที่สำคัญที่สุดในเดือนนี้\n\n" +
+                    "2. **การวิเคราะห์เชิงลึก (In-depth Analysis):**\n" +
+                    "    * **ด้านปริมาณและประสิทธิภาพ:** วิเคราะห์จากอัตราส่วนของงานที่ทำสำเร็จ (Completion Rate) เทียบกับงานทั้งหมด ชี้ให้เห็นว่าประสิทธิภาพโดยรวมอยู่ในระดับใด\n" +
+                    "    * **ด้านการโฟกัสประเภทงาน:** งานประเภทไหนที่ผู้ใช้ทำสำเร็จมากที่สุด และมีงานประเภทไหนที่อาจถูกละเลยหรือไม่สามารถปิดงานได้ (เช่น POC, อบรม)\n" +
+                    "    * **ด้านการจัดลำดับความสำคัญ:** ผู้ใช้สามารถทำงานที่มีความเร่งด่วนสูง (High Priority) ได้ดีเพียงใด สัดส่วนงานสำคัญที่ทำสำเร็จเป็นอย่างไร\n" +
+                    "    * **ด้านการกระจายงานรายสัปดาห์:** รูปแบบการทำงานในแต่ละสัปดาห์เป็นอย่างไร มีสัปดาห์ไหนที่ทำงานหนักเป็นพิเศษหรือไม่ และการกระจายตัวของงานเหมาะสมหรือไม่\n\n" +
+                    "3. **ข้อเสนอแนะเพื่อการพัฒนา (Actionable Recommendations):**\n" +
+                    "    * ให้คำแนะนำที่นำไปปฏิบัติได้จริง 2-3 ข้อเพื่อปรับปรุงการทำงานในเดือนถัดไป เช่น การบริหารจัดการเวลา, การจัดลำดับความสำคัญของงานที่ยังไม่เสร็จ หรือการกระจายงานให้สมดุลมากขึ้น";
+
+            // Call LLM Service to analyze data
+            GenerateContentResponse response = vertexAIClient.models.generateContent("gemini-2.5-flash", prompt, null);
+            System.out.println(response.text());
+            return response.text();
+        } catch (Exception e) {
+            System.out.println("Error analyzing report data: " + e.getMessage() + e.getCause());
+            return "ไม่สามารถวิเคราะห์ข้อมูลได้ในขณะนี้";
         }
     }
 
