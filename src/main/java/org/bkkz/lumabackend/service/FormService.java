@@ -123,15 +123,12 @@ public class FormService {
 
                 taskByCategory.add(row);
             }
-//            Map<String, Object> emptyRow = new HashMap<>();
-//            emptyRow.put("task_category_title","");
-//            emptyRow.put("task_category_all", 0);
-//            emptyRow.put("task_category_finished", 0);
-//            taskByCategory.add(0, emptyRow);
+
             System.out.println(taskByCategory);
             System.out.println(parameterMap);
             JRMapCollectionDataSource taskByCategoryDataSource = new JRMapCollectionDataSource((Collection<Map<String, ?>>)(Collection<?>) taskByCategory);
 
+            InputStream ic = Thread.currentThread().getContextClassLoader().getResourceAsStream("images/ic_idea.png");
 
             parameterMap.put("task_report_month", inputMonthToThai);
             parameterMap.put("total_tasks", tasks.size());
@@ -146,6 +143,8 @@ public class FormService {
             parameterMap.put("total_task_p_med", total_task_p_med);
             parameterMap.put("total_task_p_low", total_task_p_low);
             parameterMap.put("task_monthly_list", taskDataSource);
+            parameterMap.put("icon_analyzed", ic);
+            parameterMap.put("task_analyze","ทดสอบการวิเคราะห์ข้อมูล");
 
             return generateReport("reports/mis_task_report_monthly_p1.jasper", parameterMap, new JREmptyDataSource());
 
