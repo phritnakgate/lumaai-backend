@@ -33,7 +33,7 @@ public class WebClientConfig {
     public Client vertexAIClientProd(){
         return Client.builder()
                 .vertexAI(true)
-                .apiKey(System.getenv("vertex-ai.api-key"))
+                .apiKey(System.getenv("VERTEX_AI_API_KEY"))
                 .httpOptions(HttpOptions.builder().apiVersion("v1").build())
                 .build();
     }
