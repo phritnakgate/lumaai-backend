@@ -15,21 +15,21 @@ public class UpdateTaskRequest {
     )
     private String dateTime;
     private Boolean isFinished;
-    private int priority;
-    private int category;
+    private Integer priority;
+    private Integer category;
 
     public String getName() { return name; }
     public String getDescription() { return description; }
     public String getDateTime() { return dateTime; }
     public Boolean getIsFinished() { return isFinished; }
-    public int getPriority() { return priority; }
-    public int getCategory() { return category; }
+    public Integer getPriority() { return priority; }
+    public Integer getCategory() { return category; }
 
     public void setName(String name) { this.name = name; }
     public void setDescription(String description) { this.description = description; }
     public void setDateTime(String dateTime) { this.dateTime = dateTime; }
     public void setIsFinished(Boolean isFinished) { this.isFinished = isFinished; }
-    public void setPriority(int priority) { this.priority = priority; }
-    public void setCategory(int category) { this.category = category; }
+    public void setPriority(Integer priority) { this.priority = priority; }
+    public void setCategory(Integer category) { this.category = category; }
 
 }
