@@ -60,6 +60,8 @@ jobs:
             FIREBASE_DATABASE_URL=FIREBASE_DATABASE_URL:latest
             FIREBASE_BUCKET_NAME=FIREBASE_BUCKET_NAME:latest
             VERTEX_AI_API_KEY=VERTEX_AI_API_KEY:latest
+            GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest
+            GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest
 
           env_vars: |
             SPRING_PROFILES_ACTIVE=prod
