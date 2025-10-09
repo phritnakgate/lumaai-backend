@@ -13,6 +13,7 @@ import com.google.firebase.database.*;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -91,6 +92,12 @@ public class GoogleCalendarService {
         });
 
         return future;
+    }
+
+    public CompletableFuture<Boolean> checkConnectionStatusAsync() {
+        return getRefreshTokenFromFirebaseAsync()
+                .thenApply(token -> token != null && !token.isEmpty())
+                .exceptionally(ex -> false);
     }
 
     private CompletableFuture<List<Event>> getAllCalendarEvents() {
@@ -280,6 +287,68 @@ public class GoogleCalendarService {
             LocalDate googleDate = LocalDate.parse(start.getDate().toStringRfc3339());
             return !firebaseZdt.toLocalDate().equals(googleDate);
         }
+    }
+
+    public CompletableFuture<Void> revokeGoogleCalendar() {
+        String userId = getCurrentUserId();
+        return deleteGoogleRefreshTokenAsync(userId).thenCompose( v ->
+                deleteGoogleCalendarTasksAsync(userId)
+        );
+    }
+
+    public CompletableFuture<Void> deleteGoogleRefreshTokenAsync(String userId) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        DatabaseReference tokenRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(userId)
+                .child("googleRefreshToken");
+
+        tokenRef.removeValue((databaseError, databaseReference) -> {
+            if (databaseError == null) {
+                future.complete(null);
+
+            } else {
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+        return future;
+    }
+
+    private CompletableFuture<Void> deleteGoogleCalendarTasksAsync(String userId) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        DatabaseReference userTasksRef = FirebaseDatabase.getInstance().getReference("tasks");
+
+        Query googleTasksQuery = userTasksRef.orderByChild("isGoogleCalendarTask").equalTo(true);
+
+        googleTasksQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.exists()) {
+                    future.complete(null);
+                    return;
+                }
+
+                Map<String, Object> tasksToDelete = new HashMap<>();
+                for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
+                    tasksToDelete.put(taskSnapshot.getKey(), null);
+                }
+
+                userTasksRef.updateChildren(tasksToDelete, (databaseError, databaseReference) -> {
+                    if (databaseError == null) {
+                        System.out.println("Successfully deleted " + tasksToDelete.size() + " Google Calendar tasks for user: " + userId);
+                        future.complete(null);
+                    } else {
+                        future.completeExceptionally(databaseError.toException());
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+        return future;
     }
 
 

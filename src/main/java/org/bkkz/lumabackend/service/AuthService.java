@@ -118,7 +118,7 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(uid, email);
         String refreshToken = jwtUtil.generateRefreshToken(uid);
 
-        saveOrUpdateUser(uid, name, email);
+        saveOrUpdateUser(uid, name, email, 1);
 
         System.out.println("AccessToken: " + accessToken + "\nRefreshToken: " + refreshToken);
         return new AuthResponse(accessToken, refreshToken);
@@ -152,13 +152,14 @@ public class AuthService {
         return new AuthResponse(newAccessToken, newRefreshToken);
     }
 
-    private void saveOrUpdateUser(String uid, String name, String email) {
+    private void saveOrUpdateUser(String uid, String name, String email, int provider) {
         try {
             final FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference ref = database.getReference("users").child(uid);
             Map<String, Object> userData = new HashMap<>();
             userData.put("displayName", name);
             userData.put("email", email);
+            userData.put("provider",provider);
             ref.updateChildrenAsync(userData);
             System.out.println("User data saved/updated for UID: " + uid);
         } catch (Exception e) {
@@ -173,7 +174,7 @@ public class AuthService {
                 .setPassword(register.getPassword())
                 .setDisplayName(register.getName());
         UserRecord userRecord = FirebaseAuth.getInstance().createUser(createRequest);
-        saveOrUpdateUser(userRecord.getUid(), register.getName(), register.getEmail());
+        saveOrUpdateUser(userRecord.getUid(), register.getName(), register.getEmail(), 0);
         return generateAuthorizationCode(
                 userRecord.getUid(),
                 userRecord.getEmail(),
