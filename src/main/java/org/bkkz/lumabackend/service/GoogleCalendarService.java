@@ -1,0 +1,284 @@
+package org.bkkz.lumabackend.service;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.UserCredentials;
+import com.google.firebase.database.*;
+import org.bkkz.lumabackend.model.task.CreateTaskRequest;
+import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+@Service
+public class GoogleCalendarService {
+
+    private final TaskService taskService;
+    public GoogleCalendarService(TaskService taskService) {
+        this.taskService = taskService;
+    }
+
+    private final NetHttpTransport httpTransport = new NetHttpTransport();
+    private final GsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+
+    private String getCurrentUserId() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    @Value("${google.client-id}")
+    private String clientId;
+
+    @Value("${google.client-secret}")
+    private String clientSecret;
+
+    public void exchangeCodeAndStoreRefreshToken(String authCode) throws IOException {
+        String userId = getCurrentUserId();
+        GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
+                httpTransport, jsonFactory, clientId, clientSecret, authCode, "https://developers.google.com/oauthplayground"
+        ).execute();
+
+        String refreshToken = tokenResponse.getRefreshToken();
+
+        if (refreshToken != null) {
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
+            userRef.child("googleRefreshToken").setValueAsync(refreshToken);
+            System.out.println("Stored Refresh Token for user: " + userId);
+        }
+    }
+
+    private CompletableFuture<String> getRefreshTokenFromFirebaseAsync() {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        String userId = getCurrentUserId();
+        DatabaseReference tokenRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(userId)
+                .child("googleRefreshToken");
+
+        tokenRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String token = dataSnapshot.getValue(String.class);
+                if (token != null && !token.isEmpty()) {
+                    future.complete(token);
+                } else {
+                    future.completeExceptionally(new IOException("Refresh token not found for user: " + userId));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+
+        return future;
+    }
+
+    private CompletableFuture<List<Event>> getAllCalendarEvents() {
+        CompletableFuture<List<Event>> future = new CompletableFuture<>();
+        getRefreshTokenFromFirebaseAsync()
+                .thenApply(refreshToken -> {
+                    UserCredentials credentials = UserCredentials.newBuilder()
+                            .setClientId(clientId)
+                            .setClientSecret(clientSecret)
+                            .setRefreshToken(refreshToken)
+                            .build();
+
+                    Calendar c = new Calendar.Builder(httpTransport, jsonFactory, new HttpCredentialsAdapter(credentials))
+                            .setApplicationName("LumaApp")
+                            .build();
+
+                    try {
+                        return c.events().list("primary")
+                                .setOrderBy("startTime")
+                                .setSingleEvents(true)
+                                .execute()
+                                .getItems();
+                    } catch (Exception e) {
+                        return null;
+                    }
+
+                }).thenCompose(events -> {
+                    if (events != null) {
+                        System.out.println("Found " + events.size() + " events");
+                        future.complete(events);
+                    } else {
+                        future.completeExceptionally(new IOException("Failed to fetch events from Google Calendar"));
+                    }
+                    return future;
+                });
+        return future;
+    }
+
+    public CompletableFuture<Map<String, Integer>> syncGoogleCalendar() {
+        String userId = getCurrentUserId();
+        CompletableFuture<List<Event>> calenderEventsFuture = getAllCalendarEvents();
+        CompletableFuture<Map<String, DataSnapshot>> firebaseTasksFuture = getGoogleTasksFromFirebaseAsync();
+
+        return calenderEventsFuture.thenCombine(firebaseTasksFuture, (events, firebaseTasks) -> {
+
+            AtomicInteger created = new AtomicInteger();
+            AtomicInteger updated = new AtomicInteger();
+            AtomicInteger deleted = new AtomicInteger();
+
+            Set<String> firebaseTaskIds = firebaseTasks.keySet();
+            Map<String, Event> googleEventMap = events.stream()
+                    .collect(Collectors.toMap(Event::getId, event -> event));
+            Set<String> googleEventIds = googleEventMap.keySet();
+            System.out.println("Google Events: " + googleEventIds + ", Firebase Google Tasks: " + firebaseTaskIds);
+
+            // 1. สร้างงานใหม่ใน Firebase สำหรับเหตุการณ์ Google ที่ไม่มีใน Firebase
+            Set<String> eventsToCreate = googleEventIds.stream()
+                    .filter(id -> !firebaseTaskIds.contains(id))
+                    .collect(Collectors.toSet());
+            System.out.println("eventsToCreate: " + eventsToCreate);
+            for (String eventId : eventsToCreate) {
+                Event event = googleEventMap.get(eventId);
+                CreateTaskRequest newTask = convertEventToCreateTaskRequest(event);
+                taskService.createTask(newTask, true, eventId, userId);
+                created.getAndIncrement();
+            }
+
+
+            // 2. อัปเดตงานใน Firebase สำหรับเหตุการณ์ Google ที่มีอยู่แล้วแต่มีการเปลี่ยนแปลง
+            Set<String> eventsToCheckForUpdate = googleEventIds.stream()
+                    .filter(firebaseTaskIds::contains)
+                    .collect(Collectors.toSet());
+            System.out.println("eventsToCheckForUpdate: " + eventsToCheckForUpdate);
+            for (String eventId : eventsToCheckForUpdate) {
+                Event googleEvent = googleEventMap.get(eventId);
+                DataSnapshot firebaseTaskSnapshot = firebaseTasks.get(eventId);
+                if (isEventModified(googleEvent, firebaseTaskSnapshot)) {
+                    UpdateTaskRequest updatedTask = convertEventToUpdateTaskRequest(googleEvent);
+                    taskService.updateTask(eventId, updatedTask, userId);
+                    updated.getAndIncrement();
+                }
+            }
+
+            // 3. ลบงานใน Firebase ที่ไม่มีเหตุการณ์ Google ที่เกี่ยวข้องอีกต่อไป
+            Set<String> tasksToDelete = firebaseTaskIds.stream()
+                    .filter(id -> !googleEventIds.contains(id))
+                    .collect(Collectors.toSet());
+            System.out.println("tasksToDelete: " + tasksToDelete);
+            for (String taskId : tasksToDelete) {
+                taskService.deleteTask(taskId, userId);
+                deleted.getAndIncrement();
+            }
+            return Map.of(
+                    "created", created.get(),
+                    "updated", updated.get(),
+                    "deleted", deleted.get()
+            );
+        });
+    }
+
+    private CompletableFuture<Map<String, DataSnapshot>> getGoogleTasksFromFirebaseAsync() {
+        String userId = getCurrentUserId();
+        CompletableFuture<Map<String, DataSnapshot>> future = new CompletableFuture<>();
+        DatabaseReference tasksRef = FirebaseDatabase.getInstance().getReference("tasks");
+        Query query = tasksRef.orderByChild("userId").equalTo(userId);
+
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Map<String, DataSnapshot> googleTasks = new HashMap<>();
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Boolean isGoogleTask = snapshot.child("isGoogleCalendarTask").getValue(Boolean.class);
+                    if (Boolean.TRUE.equals(isGoogleTask)) {
+                        googleTasks.put(snapshot.getKey(), snapshot);
+                    }
+                }
+                System.out.println("Fetched " + googleTasks.size() + " Google Calendar tasks from Firebase for user: " + userId);
+                future.complete(googleTasks);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+        return future;
+    }
+
+    private CreateTaskRequest convertEventToCreateTaskRequest(Event event) {
+        CreateTaskRequest request = new CreateTaskRequest();
+        request.setName(event.getSummary());
+        request.setDescription(event.getDescription());
+
+        EventDateTime start = event.getStart();
+        if (start.getDateTime() != null) { // Event ปกติ
+            ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start.getDateTime().getValue()), ZoneId.of("GMT+7"));
+            request.setDueDate(zdt.toLocalDate().toString());
+            request.setDueTime(zdt.toLocalTime().toString());
+        } else { // All-day Event
+            request.setDueDate(start.getDate().toStringRfc3339());
+            request.setDueTime("");
+        }
+
+        request.setCategory(0);
+        request.setPriority(0);
+
+        return request;
+    }
+
+    private UpdateTaskRequest convertEventToUpdateTaskRequest(Event event) {
+        UpdateTaskRequest request = new UpdateTaskRequest();
+        request.setName(event.getSummary());
+        request.setDescription(event.getDescription());
+
+        EventDateTime start = event.getStart();
+        if (start.getDateTime() != null) {
+            ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start.getDateTime().getValue()), ZoneId.of("GMT+7"));
+            request.setDateTime(zdt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        } else { // All-day event
+            LocalDate date = LocalDate.parse(start.getDate().toStringRfc3339());
+            ZonedDateTime zdt = date.atStartOfDay(ZoneId.of("GMT+7"));
+            request.setDateTime(zdt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        }
+
+        return request;
+    }
+
+    private boolean isEventModified(Event googleEvent, DataSnapshot firebaseTask) {
+        String googleName = googleEvent.getSummary();
+        String firebaseName = firebaseTask.child("name").getValue(String.class);
+        if (!Objects.equals(googleName, firebaseName)) return true;
+
+        String googleDescription = googleEvent.getDescription();
+        String firebaseDescription = firebaseTask.child("description").getValue(String.class);
+        if (!Objects.equals(googleDescription, firebaseDescription)) return true;
+
+        String firebaseDateTimeStr = firebaseTask.child("dateTime").getValue(String.class);
+        if (firebaseDateTimeStr == null) return true;
+
+        ZonedDateTime firebaseZdt = ZonedDateTime.parse(firebaseDateTimeStr);
+
+        EventDateTime start = googleEvent.getStart();
+        if (start.getDateTime() != null) {
+            ZonedDateTime googleZdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start.getDateTime().getValue()), ZoneId.systemDefault());
+            return !firebaseZdt.toInstant().equals(googleZdt.toInstant());
+        } else { // All-day event
+            LocalDate googleDate = LocalDate.parse(start.getDate().toStringRfc3339());
+            return !firebaseZdt.toLocalDate().equals(googleDate);
+        }
+    }
+
+
+}

@@ -21,6 +21,9 @@ public class FirebaseLocalConfig {
             System.setProperty("firebase.database-url", Objects.requireNonNull(dotenv.get("FIREBASE_DATABASE_URL")));
             System.setProperty("firebase.bucket-name", Objects.requireNonNull(dotenv.get("FIREBASE_BUCKET_NAME")));
             System.setProperty("vertex-ai.api-key", Objects.requireNonNull(dotenv.get("VERTEX_AI_API_KEY")));
+            System.setProperty("google.client-id", Objects.requireNonNull(dotenv.get("GOOGLE_CLIENT_ID")));
+            System.setProperty("google.client-secret", Objects.requireNonNull(dotenv.get("GOOGLE_CLIENT_SECRET")));
+            System.out.println("✅ .env loaded");
         } catch (Exception e) {
             System.err.println("Could not load .env");
         }

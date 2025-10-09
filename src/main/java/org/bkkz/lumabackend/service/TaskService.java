@@ -30,9 +30,11 @@ public class TaskService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    public void createTask(CreateTaskRequest task) {
-        String userId = getCurrentUserId();
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference("tasks").push();
+    public void createTask(CreateTaskRequest task, boolean isGoogleCalendarTask, String eventId, String uidFromCalendar) {
+        String userId = isGoogleCalendarTask ? uidFromCalendar : getCurrentUserId();
+        DatabaseReference reference = isGoogleCalendarTask ?
+                FirebaseDatabase.getInstance().getReference("tasks").child(eventId) :
+                FirebaseDatabase.getInstance().getReference("tasks").push();
 
         ZonedDateTime dtNow = ZonedDateTime.now(ZoneId.of("GMT+7"));
         LocalDate taskDate = StringUtils.hasText(task.getDueDate()) ? LocalDate.parse(task.getDueDate()) : dtNow.toLocalDate();
@@ -46,7 +48,8 @@ public class TaskService {
                 "dateTime", taskDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
                 "isFinished", false,
                 "category", task.getCategory(),
-                "priority", task.getPriority()
+                "priority", task.getPriority(),
+                "isGoogleCalendarTask",isGoogleCalendarTask
         ));
     }
 
@@ -87,8 +90,8 @@ public class TaskService {
     }
 
 
-    public CompletableFuture<ResponseEntity<?>> deleteTask(String taskId){
-        String userId = getCurrentUserId();
+    public CompletableFuture<ResponseEntity<?>> deleteTask(String taskId, String uidFromCalendar){
+        String userId = (uidFromCalendar == null) ? getCurrentUserId() : uidFromCalendar;
         DatabaseReference taskRef = FirebaseDatabase.getInstance()
                 .getReference("tasks")
                 .child(taskId);
@@ -113,8 +116,8 @@ public class TaskService {
         return future;
     }
 
-    public CompletableFuture<ResponseEntity<?>> updateTask(String taskId, UpdateTaskRequest updateTaskRequest){
-        String userId = getCurrentUserId();
+    public CompletableFuture<ResponseEntity<?>> updateTask(String taskId, UpdateTaskRequest updateTaskRequest, String uidFromCalendar){
+        String userId = (uidFromCalendar == null) ? getCurrentUserId() : uidFromCalendar;
         DatabaseReference taskRef = FirebaseDatabase.getInstance()
                 .getReference("tasks")
                 .child(taskId);

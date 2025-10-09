@@ -144,7 +144,7 @@ public class LLMService {
                 taskRequest.setDueTime(decoratedItem.time());
                 taskRequest.setCategory(0);
                 taskRequest.setPriority(0);
-                taskService.createTask(taskRequest);
+                taskService.createTask(taskRequest, false, null, null);
 
                 serviceResponse.get("results").add(Map.of(
                         "intent", "ADD",
@@ -185,7 +185,7 @@ public class LLMService {
                 if(!decoratedItem.date().isEmpty() && !decoratedItem.time().isEmpty()) {
                     taskRequest.setDateTime(decoratedItem.date() + "T" + decoratedItem.time() + ":00+07:00");
                 }
-                taskService.updateTask((String) userTasks.get(0).get("id"),taskRequest);
+                taskService.updateTask((String) userTasks.get(0).get("id"),taskRequest, null);
                 serviceResponse.get("results").add(Map.of(
                         "intent", "EDIT",
                         "message", "แก้ไขงานเรียบร้อยครับ :D"
@@ -217,7 +217,7 @@ public class LLMService {
 
                 serviceResponse.get("errors").add(Map.of("intent", "REMOVE", "message", "ตรวจสอบแล้ว ไม่พบงานที่ต้องการลบครับ"));
             } else if (userTasks.size() == 1) {
-                taskService.deleteTask((String) userTasks.get(0).get("id"));
+                taskService.deleteTask((String) userTasks.get(0).get("id"), null);
                 serviceResponse.get("results").add(Map.of(
                         "intent", "REMOVE",
                         "message", "ลบงานเรียบร้อยครับ :D"

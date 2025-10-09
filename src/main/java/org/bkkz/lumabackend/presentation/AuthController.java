@@ -109,19 +109,6 @@ public class AuthController {
         }
     }
 
-//    @PostMapping("/refresh")
-//    public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenRequest) {
-//        try {
-//            AuthResponse newToken = authService.refreshAccessToken(refreshTokenRequest.getRefreshToken());
-//            return getOkResponseEntity(newToken);
-//        } catch (Exception e) {
-//            Map<String, String> errorResponse = new HashMap<>();
-//            errorResponse.put("error", "invalid_grant");
-//            errorResponse.put("error_description", "The refresh token is invalid or expired.");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-//        }
-//    }
-
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         if (refreshTokenRequest.getRefreshToken() == null || refreshTokenRequest.getRefreshToken().isEmpty()) {

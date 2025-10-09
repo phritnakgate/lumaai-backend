@@ -46,7 +46,7 @@ public class TaskController {
             return ResponseEntity.badRequest().body(Map.of("error", "Invalid priority"));
         }
         try {
-            taskService.createTask(task);
+            taskService.createTask(task, false, null, null);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("result", "Task Created successfully!"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -76,7 +76,7 @@ public class TaskController {
     @DeleteMapping("/{taskId}")
     public ResponseEntity<?> deleteTask(@PathVariable String taskId) {
         try {
-            CompletableFuture<ResponseEntity<?>> future = taskService.deleteTask(taskId);
+            CompletableFuture<ResponseEntity<?>> future = taskService.deleteTask(taskId, null);
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
             Thread.currentThread().interrupt();
@@ -91,7 +91,7 @@ public class TaskController {
             @RequestBody @Valid UpdateTaskRequest updateTaskRequest
     ) {
         try {
-            CompletableFuture<ResponseEntity<?>> future = taskService.updateTask(taskId, updateTaskRequest);
+            CompletableFuture<ResponseEntity<?>> future = taskService.updateTask(taskId, updateTaskRequest, null);
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
             Thread.currentThread().interrupt();
