@@ -49,9 +49,16 @@ public class GoogleCalendarController {
     public ResponseEntity<Map<String, Object>> checkConnection() {
         try{
             boolean isConnected = googleCalendarService.checkConnectionStatusAsync().get();
-            return ResponseEntity.ok().body(Map.of(
-                    "result", isConnected)
-            );
+            if(isConnected){
+                return ResponseEntity.ok().body(Map.of(
+                        "result", "true")
+                );
+            }else{
+                return ResponseEntity.ok().body(Map.of(
+                        "result", "false")
+                );
+            }
+
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
         }
