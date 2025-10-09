@@ -12,7 +12,7 @@ import com.google.auth.oauth2.UserCredentials;
 import com.google.firebase.database.*;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -31,8 +31,16 @@ import java.util.stream.Collectors;
 public class GoogleCalendarService {
 
     private final TaskService taskService;
-    public GoogleCalendarService(TaskService taskService) {
+    private final String clientId;
+    private final String clientSecret;
+    public GoogleCalendarService(
+            TaskService taskService,
+            @Qualifier("googleClientId") String clientId,
+            @Qualifier("googleClientSecret") String clientSecret
+    ) {
         this.taskService = taskService;
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
     }
 
     private final NetHttpTransport httpTransport = new NetHttpTransport();
@@ -41,12 +49,6 @@ public class GoogleCalendarService {
     private String getCurrentUserId() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
-
-    @Value("${google.client-id}")
-    private String clientId;
-
-    @Value("${google.client-secret}")
-    private String clientSecret;
 
     public void exchangeCodeAndStoreRefreshToken(String authCode) throws IOException {
         String userId = getCurrentUserId();
