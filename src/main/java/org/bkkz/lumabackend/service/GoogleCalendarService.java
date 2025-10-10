@@ -1,6 +1,8 @@
 package org.bkkz.lumabackend.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -17,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -50,18 +53,32 @@ public class GoogleCalendarService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    public void exchangeCodeAndStoreRefreshToken(String authCode, String email) throws IOException {
+    public void exchangeCodeAndStoreRefreshToken(String authCode, String email) throws IOException, GeneralSecurityException {
         String userId = getCurrentUserId();
         GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
                 httpTransport, jsonFactory, clientId, clientSecret, authCode, "https://developers.google.com/oauthplayground"
         ).execute();
 
         String refreshToken = tokenResponse.getRefreshToken();
+        String verifiedEmail = email;
+        if(email.isEmpty()){
+            String idTokenString = tokenResponse.getIdToken();
+            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
+                    .setAudience(Collections.singletonList(clientId))
+                    .build();
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            if (idToken == null) {
+                throw new GeneralSecurityException("ID Token verification failed.");
+            }
+            GoogleIdToken.Payload payload = idToken.getPayload();
+            verifiedEmail = payload.getEmail();
+        }
+
 
         if (refreshToken != null) {
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
             userRef.child("googleRefreshToken").setValueAsync(refreshToken);
-            userRef.child("googleCalendarEmail").setValueAsync(email);
+            userRef.child("googleCalendarEmail").setValueAsync(verifiedEmail);
             System.out.println("Stored Refresh Token for user: " + userId);
         }
     }
