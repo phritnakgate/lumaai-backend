@@ -333,24 +333,35 @@ public class GoogleCalendarService {
 
     private CompletableFuture<Void> deleteGoogleCalendarTasksAsync(String userId) {
         CompletableFuture<Void> future = new CompletableFuture<>();
-        DatabaseReference userTasksRef = FirebaseDatabase.getInstance().getReference("tasks");
+        DatabaseReference tasksRef = FirebaseDatabase.getInstance().getReference("tasks");
 
-        Query googleTasksQuery = userTasksRef.orderByChild("isGoogleCalendarTask").equalTo(true);
+        Query userTasksQuery = tasksRef.orderByChild("userId").equalTo(userId);
 
-        googleTasksQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+        userTasksQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (!dataSnapshot.exists()) {
-                    future.complete(null);
+                    System.out.println("No tasks found for user: " + userId);
+                    future.complete(null); // ไม่มี Task ของ user คนนี้ ก็ถือว่าสำเร็จ
                     return;
                 }
 
                 Map<String, Object> tasksToDelete = new HashMap<>();
                 for (DataSnapshot taskSnapshot : dataSnapshot.getChildren()) {
-                    tasksToDelete.put(taskSnapshot.getKey(), null);
+                    Boolean isGoogleTask = taskSnapshot.child("isGoogleCalendarTask").getValue(Boolean.class);
+
+                    if (Boolean.TRUE.equals(isGoogleTask)) {
+                        tasksToDelete.put(taskSnapshot.getKey(), null);
+                    }
                 }
 
-                userTasksRef.updateChildren(tasksToDelete, (databaseError, databaseReference) -> {
+                if (tasksToDelete.isEmpty()) {
+                    System.out.println("No Google Calendar tasks to delete for user: " + userId);
+                    future.complete(null);
+                    return;
+                }
+
+                tasksRef.updateChildren(tasksToDelete, (databaseError, databaseReference) -> {
                     if (databaseError == null) {
                         System.out.println("Successfully deleted " + tasksToDelete.size() + " Google Calendar tasks for user: " + userId);
                         future.complete(null);
