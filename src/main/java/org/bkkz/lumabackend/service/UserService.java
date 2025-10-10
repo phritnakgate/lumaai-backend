@@ -7,6 +7,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -17,10 +18,10 @@ public class UserService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    public CompletableFuture<ResponseEntity<?>> getCurrentUserData() {
+    public CompletableFuture<List<Map<String, Object>>> getCurrentUserData() {
         String userId = getCurrentUserId();
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference("users").child(userId);
-        CompletableFuture<ResponseEntity<?>> future = new CompletableFuture<>();
+        CompletableFuture<List<Map<String, Object>>> future = new CompletableFuture<>();
 
         reference.addListenerForSingleValueEvent(new ValueEventListener() {
 
@@ -30,17 +31,15 @@ public class UserService {
                 if (dataSnapshot.exists()) {
                     Map<String, Object> userMap = (Map<String, Object>) dataSnapshot.getValue();
                     userData.add(userMap);
-                    future.complete(ResponseEntity.ok().body(Map.of("results", userData)));
+                    future.complete(userData);
                 } else {
-                    future.complete(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(Map.of("error", "User not found.")));
+                    future.complete(Collections.emptyList());
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                future.complete(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(Map.of("error", databaseError.getMessage())));
+                future.complete(Collections.emptyList());
             }
         });
         return future;
