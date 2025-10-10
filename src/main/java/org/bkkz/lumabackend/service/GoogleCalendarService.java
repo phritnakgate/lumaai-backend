@@ -13,7 +13,6 @@ import com.google.firebase.database.*;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +50,7 @@ public class GoogleCalendarService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    public void exchangeCodeAndStoreRefreshToken(String authCode) throws IOException {
+    public void exchangeCodeAndStoreRefreshToken(String authCode, String email) throws IOException {
         String userId = getCurrentUserId();
         GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
                 httpTransport, jsonFactory, clientId, clientSecret, authCode, "https://developers.google.com/oauthplayground"
@@ -62,6 +61,7 @@ public class GoogleCalendarService {
         if (refreshToken != null) {
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
             userRef.child("googleRefreshToken").setValueAsync(refreshToken);
+            userRef.child("googleCalendarEmail").setValueAsync(email);
             System.out.println("Stored Refresh Token for user: " + userId);
         }
     }

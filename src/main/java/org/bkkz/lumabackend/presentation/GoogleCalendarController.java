@@ -22,7 +22,7 @@ public class GoogleCalendarController {
     @PostMapping("/auth")
     public ResponseEntity<?> connect(@RequestBody ConnectCalendarRequest connectCalendarRequest) {
         try{
-            googleCalendarService.exchangeCodeAndStoreRefreshToken(connectCalendarRequest.getAuthCode());
+            googleCalendarService.exchangeCodeAndStoreRefreshToken(connectCalendarRequest.getAuthCode(), connectCalendarRequest.getEmail());
             return ResponseEntity.ok().body(Map.of("result","Successfully connected Google Calendar."));
         }catch (GoogleJsonResponseException e) {
             System.err.println("Google API Error: " + e.getDetails());
