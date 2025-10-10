@@ -257,8 +257,18 @@ public class GoogleCalendarService {
             request.setDueDate(start.getDate().toStringRfc3339());
             request.setDueTime("");
         }
-
-        request.setCategory(0);
+        String eventName = request.getName().toLowerCase(Locale.ENGLISH);
+        if(eventName.contains("โค้ด") || eventName.contains("code") || eventName.contains("เขียน") || eventName.contains("coding")){
+            request.setCategory(0);
+        }else if(eventName.contains("ประชุม") || eventName.contains("คุยงาน") || eventName.contains("meeting")){
+            request.setCategory(1);
+        }else if(eventName.contains("อบรม") || eventName.contains("training") || eventName.contains("course")){
+            request.setCategory(2);
+        }else if(eventName.contains("poc") || eventName.contains("ลอง") || eventName.contains("ค้น")){
+            request.setCategory(3);
+        }else{
+            request.setCategory(4);
+        }
         request.setPriority(0);
 
         return request;
