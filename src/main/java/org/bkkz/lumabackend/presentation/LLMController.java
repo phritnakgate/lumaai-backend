@@ -5,12 +5,10 @@ import jakarta.validation.Valid;
 import org.bkkz.lumabackend.model.llm.LLMPromptRequest;
 import org.bkkz.lumabackend.model.llm.llmResponse.DecoratedItem;
 import org.bkkz.lumabackend.model.llm.llmResponse.LLMPromptResponse;
-import org.bkkz.lumabackend.service.FormService;
-import org.bkkz.lumabackend.service.LLMService;
-import org.bkkz.lumabackend.service.LogService;
-import org.bkkz.lumabackend.service.TaskService;
+import org.bkkz.lumabackend.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -28,9 +26,11 @@ public class LLMController {
     private final TaskService taskService;
     private final LogService logService;
     private final FormService formService;
+    private final GoogleCalendarService googleCalendarService;
 
     @Autowired
-    public LLMController(WebClient llmWebClient, TaskService taskService, LogService logService, FormService formService) {
+    public LLMController(WebClient llmWebClient, TaskService taskService, LogService logService, FormService formService, GoogleCalendarService googleCalendarService) {
+        this.googleCalendarService = googleCalendarService;
         this.llmWebClient = llmWebClient;
         this.taskService = taskService;
         this.logService = logService;
@@ -42,8 +42,11 @@ public class LLMController {
     public ResponseEntity<?> handleLLMRequest(@Valid @RequestBody LLMPromptRequest llmPromptRequest) {
         //Call an external LLM service
         try{
-            LLMPromptResponse response = llmWebClient.get()
-                    .uri("https://jsonblob.com/api/1412324703066054656")
+            googleCalendarService.syncGoogleCalendar();
+            LLMPromptResponse response = llmWebClient.post()
+                    .uri("https://eric-nonstandardized-copiously.ngrok-free.dev/chat")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(llmPromptRequest)
                     .retrieve()
                     .bodyToMono(LLMPromptResponse.class)
                     .block();

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
+import org.bkkz.lumabackend.service.GoogleCalendarService;
 import org.bkkz.lumabackend.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,8 +22,11 @@ import java.util.concurrent.ExecutionException;
 public class TaskController {
 
     private final TaskService taskService;
+    private final GoogleCalendarService googleCalendarService;
+
     @Autowired
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService, GoogleCalendarService googleCalendarService) {
+        this.googleCalendarService = googleCalendarService;
         this.taskService = taskService;
     }
 
@@ -59,6 +63,7 @@ public class TaskController {
             return ResponseEntity.badRequest().body(Map.of("error", "Date must be in yyyy-MM-dd or yyyy-MM format"));
         }
         try {
+            googleCalendarService.syncGoogleCalendar();
             List<Map<String, Object>> tasks = taskService.getTasksByDate(date).get();
             if (tasks.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("result", "No tasks found."));

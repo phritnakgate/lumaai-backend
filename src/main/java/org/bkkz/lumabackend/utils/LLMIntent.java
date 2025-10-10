@@ -10,13 +10,14 @@ public enum LLMIntent {
     SEARCH,
     GOOGLESEARCH,
     PLAN,
-    GENFORM;
+    GENFORM,
+    UNKNOWN;
 
     public static LLMIntent fromString(@NotNull String intent) {
         try {
             return LLMIntent.valueOf(intent.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown intent: " + intent);
+            return LLMIntent.UNKNOWN;
         }
     }
 }

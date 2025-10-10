@@ -2,6 +2,7 @@ package org.bkkz.lumabackend.presentation;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.bkkz.lumabackend.service.FormService;
+import org.bkkz.lumabackend.service.GoogleCalendarService;
 import org.bkkz.lumabackend.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -22,11 +23,13 @@ public class FormController {
 
     private final TaskService taskService;
     private final FormService formService;
+    private final GoogleCalendarService googleCalendarService;
     @Autowired
-    public FormController(TaskService taskService, FormService formService) {
+    public FormController(TaskService taskService, FormService formService, GoogleCalendarService googleCalendarService) {
 
         this.taskService = taskService;
         this.formService = formService;
+        this.googleCalendarService = googleCalendarService;
     }
 
     private String getCurrentUserId() {
@@ -37,6 +40,7 @@ public class FormController {
     public ResponseEntity<?> generateMonthlyTaskReport(@RequestParam String reportYearMonth) {
         try{
             String uid = getCurrentUserId();
+            googleCalendarService.syncGoogleCalendar();
             List<Map<String, Object>> tasks = taskService.getTasksByDate(reportYearMonth).get();
 
             byte[] report = formService.getMonthlyTaskReport(reportYearMonth, tasks);
