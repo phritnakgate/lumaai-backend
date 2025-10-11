@@ -53,7 +53,7 @@ public class LLMController {
 
             if (response == null) {
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Received an empty response from the LLM service.");
+                        .body(Map.of("error","Received an empty response from the LLM service."));
             }
 
             Map<String, Object> finalResponse = new HashMap<>();

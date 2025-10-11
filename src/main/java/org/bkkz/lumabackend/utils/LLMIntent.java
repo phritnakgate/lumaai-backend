@@ -11,6 +11,7 @@ public enum LLMIntent {
     GOOGLESEARCH,
     PLAN,
     GENFORM,
+    EXIT,
     UNKNOWN;
 
     public static LLMIntent fromString(@NotNull String intent) {

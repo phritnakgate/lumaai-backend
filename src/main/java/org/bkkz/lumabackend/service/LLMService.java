@@ -80,10 +80,15 @@ public class LLMService {
             case GENFORM:
                 handleGenForm();
                 break;
+            case EXIT:
+                serviceResponse.get("results").add(Map.of(
+                        "intent", "EXIT",
+                        "message", "ออกจากโหมดเดิมแล้วครับ :D"
+                ));
             default:
                 serviceResponse.get("errors").add(Map.of(
                         "intent", "UNKNOWN",
-                        "message", "Unknown intent"
+                        "message", "ไม่สามารถประมวลผลคำขอได้ครับ :("
                 ));
                 break;
         }
