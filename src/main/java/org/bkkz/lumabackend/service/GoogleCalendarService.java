@@ -19,6 +19,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -27,6 +30,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,7 @@ public class GoogleCalendarService {
     private final TaskService taskService;
     private final String clientId;
     private final String clientSecret;
+
     public GoogleCalendarService(
             TaskService taskService,
             @Qualifier("googleClientId") String clientId,
@@ -61,7 +66,7 @@ public class GoogleCalendarService {
 
         String refreshToken = tokenResponse.getRefreshToken();
         String verifiedEmail = email;
-        if(email.isEmpty()){
+        if (email.isEmpty()) {
             String idTokenString = tokenResponse.getIdToken();
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(httpTransport, jsonFactory)
                     .setAudience(Collections.singletonList(clientId))
@@ -258,15 +263,15 @@ public class GoogleCalendarService {
             request.setDueTime("");
         }
         String eventName = request.getName().toLowerCase(Locale.ENGLISH);
-        if(eventName.contains("โค้ด") || eventName.contains("code") || eventName.contains("เขียน") || eventName.contains("coding")){
+        if (eventName.contains("โค้ด") || eventName.contains("code") || eventName.contains("เขียน") || eventName.contains("coding")) {
             request.setCategory(0);
-        }else if(eventName.contains("ประชุม") || eventName.contains("คุยงาน") || eventName.contains("meeting")){
+        } else if (eventName.contains("ประชุม") || eventName.contains("คุยงาน") || eventName.contains("meeting")) {
             request.setCategory(1);
-        }else if(eventName.contains("อบรม") || eventName.contains("training") || eventName.contains("course")){
+        } else if (eventName.contains("อบรม") || eventName.contains("training") || eventName.contains("course")) {
             request.setCategory(2);
-        }else if(eventName.contains("poc") || eventName.contains("ลอง") || eventName.contains("ค้น")){
+        } else if (eventName.contains("poc") || eventName.contains("ลอง") || eventName.contains("ค้น")) {
             request.setCategory(3);
-        }else{
+        } else {
             request.setCategory(4);
         }
         request.setPriority(0);
@@ -318,7 +323,7 @@ public class GoogleCalendarService {
 
     public CompletableFuture<Void> revokeGoogleCalendar() {
         String userId = getCurrentUserId();
-        return deleteGoogleRefreshTokenAsync(userId).thenCompose( v ->
+        return deleteGoogleRefreshTokenAsync(userId).thenCompose(v ->
                 deleteGoogleCalendarTasksAsync(userId)
         );
     }
@@ -330,16 +335,74 @@ public class GoogleCalendarService {
                 .child(userId)
                 .child("googleRefreshToken");
 
-        tokenRef.removeValue((databaseError, databaseReference) -> {
-            if (databaseError == null) {
-                future.complete(null);
 
-            } else {
-                future.completeExceptionally(databaseError.toException());
+        tokenRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists() && snapshot.getValue() != null) {
+                    String refreshToken = snapshot.getValue(String.class);
+                    if (refreshToken == null || refreshToken.isEmpty()) {
+                        future.completeExceptionally(new Exception("refresh token ว่าง"));
+                        return;
+                    }
+
+                    // revoke ก่อน แล้วค่อยลบจาก Firebase
+                    revokeGoogleToken(refreshToken)
+                            .thenRun(() -> {
+                                tokenRef.removeValue((databaseError, databaseReference) -> {
+                                    if (databaseError == null) {
+                                        future.complete(null);
+                                    } else {
+                                        future.completeExceptionally(databaseError.toException());
+                                    }
+                                });
+                            })
+                            .exceptionally(ex -> {
+                                // ถ้า revoke fail ก็ส่ง exception กลับ
+                                future.completeExceptionally(ex);
+                                return null;
+                            });
+
+                } else {
+                    future.completeExceptionally(new Exception("ไม่พบ refresh token ใน Firebase"));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                future.completeExceptionally(error.toException());
             }
         });
+
         return future;
+
     }
+
+    // ฟังก์ชันสำหรับ revoke refresh token
+    private CompletableFuture<Void> revokeGoogleToken(String refreshToken) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                URL url = new URL("https://oauth2.googleapis.com/revoke");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                String params = "token=" + refreshToken;
+                conn.getOutputStream().write(params.getBytes(StandardCharsets.UTF_8));
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode != 200) {
+                    throw new IOException("Failed to revoke token, response code: " + responseCode);
+                }
+
+                conn.disconnect();
+            } catch (Exception e) {
+                throw new CompletionException(e);
+            }
+        });
+    }
+
 
     private CompletableFuture<Void> deleteGoogleCalendarTasksAsync(String userId) {
         CompletableFuture<Void> future = new CompletableFuture<>();
