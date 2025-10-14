@@ -42,7 +42,7 @@ public class LLMController {
     public ResponseEntity<?> handleLLMRequest(@Valid @RequestBody LLMPromptRequest llmPromptRequest) {
         //Call an external LLM service
         try{
-            //googleCalendarService.syncGoogleCalendar();
+            googleCalendarService.syncGoogleCalendar();
             LLMPromptResponse response = llmWebClient.post()
                     .uri("https://luma-model-local.bkkz.org/chat")
                     .contentType(MediaType.APPLICATION_JSON)
