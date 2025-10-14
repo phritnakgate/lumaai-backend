@@ -44,7 +44,7 @@ public class LLMController {
         try{
             googleCalendarService.syncGoogleCalendar();
             LLMPromptResponse response = llmWebClient.post()
-                    .uri("https://eric-nonstandardized-copiously.ngrok-free.dev/chat")
+                    .uri("https://luma-model-local.bkkz.org/chat")
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(llmPromptRequest)
                     .retrieve()
