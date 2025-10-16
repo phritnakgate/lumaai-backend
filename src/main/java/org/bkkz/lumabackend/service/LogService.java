@@ -28,8 +28,9 @@ public class LogService {
         ZonedDateTime dtNow = ZonedDateTime.now(ZoneId.of("GMT+7"));
 
         ArrayList<String> mainIntent = new ArrayList<>();
-        List<String> taskIntents = List.of("Check", "Add", "Edit", "Remove");
+        List<String> taskIntents = List.of("Check", "Add", "Edit", "Remove","check", "add", "edit", "remove");
         List<String> searchIntents = List.of("Search", "GoogleSearch");
+        System.out.println(intent);
         if (intent.stream().anyMatch(taskIntents::contains)) {
             mainIntent.add("Task");
         }

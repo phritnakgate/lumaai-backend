@@ -110,7 +110,7 @@ public class LLMService {
                 filterTaskByDate();
             }
 
-            Map<String, Object> checkResult = Map.of("intent", "CHECK", "output", userTasks);
+            Map<String, Object> checkResult = Map.of("intent", "CHECK","message","ตรวจสอบงานให้เรียบร้อยแล้วครับ", "output", userTasks);
             serviceResponse.get("results").add(checkResult);
 
         } catch (Exception e) {
