@@ -58,7 +58,7 @@ public class LLMController {
 
             Map<String, Object> finalResponse = new HashMap<>();
 
-            finalResponse.put("result", response.message());
+            StringBuilder responseMessages = new StringBuilder();
             List<Map<String, Object>> resultsList = new ArrayList<>();
             finalResponse.put("results", resultsList);
             List<Map<String, Object>> errorsList = new ArrayList<>();
@@ -74,14 +74,25 @@ public class LLMController {
                     Map<String, List<Map<String, Object>>> serviceResponse = llmService.processIntent();
                     if (serviceResponse.containsKey("results")) {
                         resultsList.addAll(serviceResponse.get("results"));
+                        for (Map<String, Object> res : serviceResponse.get("results")) {
+                            if (res.containsKey("message")) {
+                                responseMessages.append(res.get("message")).append(" ");
+                            }
+                        }
                     }
                     if (serviceResponse.containsKey("errors")) {
                         errorsList.addAll(serviceResponse.get("errors"));
+                        for (Map<String, Object> err : serviceResponse.get("errors")) {
+                            if (err.containsKey("message")) {
+                                responseMessages.append(err.get("message")).append(" ");
+                            }
+                        }
                     }
                 }
             }
-
-            logService.createLog(llmPromptRequest.getText(), response.message(), allIntents);
+            System.out.println("Decorated Response: " + responseMessages);
+            finalResponse.put("result", responseMessages.toString());
+            logService.createLog(llmPromptRequest.getText(), responseMessages.toString(), allIntents);
 
             return ResponseEntity.status(HttpStatus.OK).body(finalResponse);
         } catch (Exception e) {
