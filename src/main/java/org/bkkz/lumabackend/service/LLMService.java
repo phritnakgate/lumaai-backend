@@ -289,6 +289,10 @@ public class LLMService {
                     break;
                 }
             }
+            if(reportYm.isEmpty()){
+                LocalDate today = LocalDate.now(ZoneId.of("Asia/Bangkok"));
+                reportYm = String.format("%04d-%02d", today.getYear(), today.getMonthValue());
+            }
         }
         try{
             System.out.println(reportYm);

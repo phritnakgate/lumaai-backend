@@ -65,7 +65,7 @@ public class LLMController {
             finalResponse.put("errors", errorsList);
 
             ArrayList<String> allIntents = new ArrayList<>();
-
+            System.out.println("LLM Response: " + response);
             if (response.decoratedInput() != null) {
                 for(DecoratedItem item : response.decoratedInput().decorated()) {
                     System.out.println(item);
