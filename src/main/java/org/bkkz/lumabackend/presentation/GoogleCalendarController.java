@@ -2,7 +2,7 @@ package org.bkkz.lumabackend.presentation;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import org.bkkz.lumabackend.model.googleCalendar.ConnectCalendarRequest;
-import org.bkkz.lumabackend.model.googleCalendar.CreateCalendarEventRequest;
+import org.bkkz.lumabackend.model.googleCalendar.CalendarEventRequest;
 import org.bkkz.lumabackend.service.GoogleCalendarService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -75,10 +75,33 @@ public class GoogleCalendarController {
     }
 
     @PostMapping("/event")
-    public ResponseEntity<?> createCalendarEvent(@RequestBody CreateCalendarEventRequest createCalendarEventRequest) {
+    public ResponseEntity<?> createCalendarEvent(@RequestBody CalendarEventRequest calendarEventRequest) {
         try {
-            String result = googleCalendarService.createGoogleCalendarEvent(createCalendarEventRequest).get();
+            String result = googleCalendarService.createGoogleCalendarEvent(calendarEventRequest).get();
             return ResponseEntity.ok().body(Map.of("result", result));
+
+        }catch (Exception e){
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+    @PatchMapping("/event/{eventId}")
+    public ResponseEntity<?> updateCalendarEvent(
+            @PathVariable String eventId,
+            @RequestBody CalendarEventRequest calendarEventRequest) {
+        try {
+            googleCalendarService.editGoogleCalendarEvent(eventId, calendarEventRequest);
+            return ResponseEntity.ok().body(Map.of("result", "Event updated successfully"));
+
+        }catch (Exception e){
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/event/{eventId}")
+    public ResponseEntity<?> deleteCalendarEvent(@PathVariable String eventId) {
+        try {
+            googleCalendarService.deleteGoogleCalendarEvent(eventId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("result", "Event deleted successfully"));
 
         }catch (Exception e){
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));

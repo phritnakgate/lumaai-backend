@@ -13,7 +13,7 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.firebase.database.*;
-import org.bkkz.lumabackend.model.googleCalendar.CreateCalendarEventRequest;
+import org.bkkz.lumabackend.model.googleCalendar.CalendarEventRequest;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -454,7 +451,8 @@ public class GoogleCalendarService {
         return future;
     }
 
-    public CompletableFuture<String> createGoogleCalendarEvent(CreateCalendarEventRequest calendarEventRequest) {
+    public CompletableFuture<String> createGoogleCalendarEvent(CalendarEventRequest calendarEventRequest) {
+        String userId = getCurrentUserId();
         CompletableFuture<String> future = new CompletableFuture<>();
         getRefreshTokenFromFirebaseAsync().thenApply(token -> {
                     UserCredentials credentials = UserCredentials.newBuilder()
@@ -480,7 +478,7 @@ public class GoogleCalendarService {
                     try {
                         Event createdEvent = c.events().insert(calendarId, event).execute();
                         CreateTaskRequest newTask = convertToCreateTaskReq(calendarEventRequest);
-                        taskService.createTask(newTask, true, createdEvent.getId(), calendarEventRequest.getOwnerEmail());
+                        taskService.createTask(newTask, true, createdEvent.getId(), userId);
                         return future.complete(createdEvent.getId());
                     } catch (Exception e) {
                         return future.completeExceptionally(e);
@@ -490,8 +488,76 @@ public class GoogleCalendarService {
         return future;
     }
 
+    public void editGoogleCalendarEvent(String eventId, CalendarEventRequest calendarEventRequest) {
+        String userId = getCurrentUserId();
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        getRefreshTokenFromFirebaseAsync().thenApply(token -> {
+                    UserCredentials credentials = UserCredentials.newBuilder()
+                            .setClientId(clientId)
+                            .setClientSecret(clientSecret)
+                            .setRefreshToken(token)
+                            .build();
+
+                    Calendar c = new Calendar.Builder(httpTransport, jsonFactory, new HttpCredentialsAdapter(credentials))
+                            .setApplicationName("LumaApp")
+                            .build();
+                    String calendarId = "primary";
+                    try {
+                        Event event = c.events().get(calendarId, eventId).execute();
+                        event.setSummary(calendarEventRequest.getName());
+                        event.setDescription(calendarEventRequest.getDescription());
+                        EventDateTime start = new EventDateTime()
+                                .setDate(new DateTime(calendarEventRequest.getStartTime()));
+                        event.setStart(start);
+                        EventDateTime end = new EventDateTime()
+                                .setDate(new DateTime(calendarEventRequest.getEndTime()));
+                        event.setEnd(end);
+
+                        c.events().patch(calendarId, eventId, event).execute();
+                        UpdateTaskRequest updateTaskRequest = new UpdateTaskRequest();
+                        updateTaskRequest.setName(calendarEventRequest.getName());
+                        updateTaskRequest.setDescription(calendarEventRequest.getDescription());
+                        ZonedDateTime taskDate = LocalDate.parse(calendarEventRequest.getStartTime())
+                                .atTime(LocalTime.parse(calendarEventRequest.getAppTaskTime()))
+                                .atZone(ZoneId.of("Asia/Bangkok"));
+                        updateTaskRequest.setDateTime(taskDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSSxxxxx")));
+                        System.out.println("Updating task with name" +updateTaskRequest.getName() + " with dateTime " + updateTaskRequest.getDateTime());
+                        taskService.updateTask(eventId, updateTaskRequest, userId);
+                        return future.complete(null);
+                    } catch (Exception e) {
+                        return future.completeExceptionally(e);
+                    }
+                }
+        );
+    }
+
+    public void deleteGoogleCalendarEvent(String eventId) {
+        String userId = getCurrentUserId();
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        getRefreshTokenFromFirebaseAsync().thenApply(token -> {
+                    UserCredentials credentials = UserCredentials.newBuilder()
+                            .setClientId(clientId)
+                            .setClientSecret(clientSecret)
+                            .setRefreshToken(token)
+                            .build();
+
+                    Calendar c = new Calendar.Builder(httpTransport, jsonFactory, new HttpCredentialsAdapter(credentials))
+                            .setApplicationName("LumaApp")
+                            .build();
+                    String calendarId = "primary";
+                    try {
+                        c.events().delete(calendarId, eventId).execute();
+                        taskService.deleteTask(eventId, userId);
+                        return future.complete(null);
+                    } catch (Exception e) {
+                        return future.completeExceptionally(e);
+                    }
+                }
+        );
+    }
+
     @NotNull
-    private static CreateTaskRequest convertToCreateTaskReq(CreateCalendarEventRequest calendarEventRequest) {
+    private static CreateTaskRequest convertToCreateTaskReq(CalendarEventRequest calendarEventRequest) {
         CreateTaskRequest newTask = new CreateTaskRequest();
         newTask.setName(calendarEventRequest.getName());
         newTask.setDescription(calendarEventRequest.getDescription());
