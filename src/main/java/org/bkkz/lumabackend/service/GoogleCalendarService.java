@@ -6,14 +6,17 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.firebase.database.*;
+import org.bkkz.lumabackend.model.googleCalendar.CreateCalendarEventRequest;
 import org.bkkz.lumabackend.model.task.CreateTaskRequest;
 import org.bkkz.lumabackend.model.task.UpdateTaskRequest;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -378,7 +381,6 @@ public class GoogleCalendarService {
 
     }
 
-    // ฟังก์ชันสำหรับ revoke refresh token
     private CompletableFuture<Void> revokeGoogleToken(String refreshToken) {
         return CompletableFuture.runAsync(() -> {
             try {
@@ -452,5 +454,51 @@ public class GoogleCalendarService {
         return future;
     }
 
+    public CompletableFuture<String> createGoogleCalendarEvent(CreateCalendarEventRequest calendarEventRequest) {
+        CompletableFuture<String> future = new CompletableFuture<>();
+        getRefreshTokenFromFirebaseAsync().thenApply(token -> {
+                    UserCredentials credentials = UserCredentials.newBuilder()
+                            .setClientId(clientId)
+                            .setClientSecret(clientSecret)
+                            .setRefreshToken(token)
+                            .build();
 
+                    Calendar c = new Calendar.Builder(httpTransport, jsonFactory, new HttpCredentialsAdapter(credentials))
+                            .setApplicationName("LumaApp")
+                            .build();
+                    String calendarId = "primary";
+                    Event event = new Event()
+                            .setSummary(calendarEventRequest.getName())
+                            .setDescription(calendarEventRequest.getDescription());
+                    EventDateTime start = new EventDateTime()
+                            .setDate(new DateTime(calendarEventRequest.getStartTime()));
+                    event.setStart(start);
+                    EventDateTime end = new EventDateTime()
+                            .setDate(new DateTime(calendarEventRequest.getEndTime()));
+                    event.setEnd(end);
+
+                    try {
+                        Event createdEvent = c.events().insert(calendarId, event).execute();
+                        CreateTaskRequest newTask = convertToCreateTaskReq(calendarEventRequest);
+                        taskService.createTask(newTask, true, createdEvent.getId(), calendarEventRequest.getOwnerEmail());
+                        return future.complete(createdEvent.getId());
+                    } catch (Exception e) {
+                        return future.completeExceptionally(e);
+                    }
+                }
+        );
+        return future;
+    }
+
+    @NotNull
+    private static CreateTaskRequest convertToCreateTaskReq(CreateCalendarEventRequest calendarEventRequest) {
+        CreateTaskRequest newTask = new CreateTaskRequest();
+        newTask.setName(calendarEventRequest.getName());
+        newTask.setDescription(calendarEventRequest.getDescription());
+        newTask.setDueDate(calendarEventRequest.getStartTime());
+        newTask.setDueTime("");
+        newTask.setCategory(4);
+        newTask.setPriority(0);
+        return newTask;
+    }
 }

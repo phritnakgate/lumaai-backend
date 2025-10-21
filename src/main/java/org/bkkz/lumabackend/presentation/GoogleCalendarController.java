@@ -2,6 +2,7 @@ package org.bkkz.lumabackend.presentation;
 
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import org.bkkz.lumabackend.model.googleCalendar.ConnectCalendarRequest;
+import org.bkkz.lumabackend.model.googleCalendar.CreateCalendarEventRequest;
 import org.bkkz.lumabackend.service.GoogleCalendarService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,6 +71,17 @@ public class GoogleCalendarController {
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(Map.of("result", "Successfully revoked Google Calendar connection."));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", "An unexpected error occurred: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/event")
+    public ResponseEntity<?> createCalendarEvent(@RequestBody CreateCalendarEventRequest createCalendarEventRequest) {
+        try {
+            String result = googleCalendarService.createGoogleCalendarEvent(createCalendarEventRequest).get();
+            return ResponseEntity.ok().body(Map.of("result", result));
+
+        }catch (Exception e){
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
 
