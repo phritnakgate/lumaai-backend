@@ -521,6 +521,8 @@ public class GoogleCalendarService {
                                 .atTime(LocalTime.parse(calendarEventRequest.getAppTaskTime()))
                                 .atZone(ZoneId.of("Asia/Bangkok"));
                         updateTaskRequest.setDateTime(taskDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSSxxxxx")));
+                        updateTaskRequest.setCategory(calendarEventRequest.getAppCategory());
+                        updateTaskRequest.setPriority(calendarEventRequest.getAppPriority());
                         System.out.println("Updating task with name" +updateTaskRequest.getName() + " with dateTime " + updateTaskRequest.getDateTime());
                         taskService.updateTask(eventId, updateTaskRequest, userId);
                         return future.complete(null);

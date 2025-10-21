@@ -7,6 +7,8 @@ public class CalendarEventRequest {
     private String endTime;
     private String ownerEmail;
     private String appTaskTime = null;
+    private Integer appCategory = null;
+    private Integer appPriority = null;
 
     public String getName() { return name; }
     public String getDescription() { return description; }
@@ -16,6 +18,9 @@ public class CalendarEventRequest {
     public String getAppTaskTime() {
         return appTaskTime;
     }
+    public Integer getAppCategory() { return appCategory; }
+    public Integer getAppPriority() { return appPriority; }
+
     public void setName(String name) { this.name = name; }
     public void setDescription(String description) { this.description = description; }
     public void setStartTime(String startTime) { this.startTime = startTime; }
@@ -24,4 +29,6 @@ public class CalendarEventRequest {
     public void setAppTaskTime(String appTaskTime) {
         this.appTaskTime = appTaskTime;
     }
+    public void setAppCategory(Integer appCategory) { this.appCategory = appCategory; }
+    public void setAppPriority(Integer appPriority) { this.appPriority = appPriority; }
 }
