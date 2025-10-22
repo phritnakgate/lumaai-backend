@@ -43,6 +43,12 @@ public class LogService {
         if(intent.contains("genform")){
             mainIntent.add("GenForm");
         }
+        if(intent.contains("Exit")){
+            mainIntent.add("Exit");
+        }
+        if(mainIntent.isEmpty()){
+            mainIntent.add("Unknown");
+        }
 
         reference.setValueAsync(Map.of(
                 "userId", userId,

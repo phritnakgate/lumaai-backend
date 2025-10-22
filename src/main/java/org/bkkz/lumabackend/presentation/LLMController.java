@@ -67,6 +67,15 @@ public class LLMController {
             ArrayList<String> allIntents = new ArrayList<>();
             System.out.println("LLM Response: " + response);
             if (response.decoratedInput() != null) {
+                if(response.decoratedInput().decorated().isEmpty()){
+                    finalResponse.put("result", "ไม่สามารถประมวลผลคำขอได้ครับ :(");
+                    finalResponse.put("errors", Map.of(
+                            "intent", "UNKNOWN",
+                            "message", "ไม่สามารถประมวลผลคำขอได้ครับ :("
+                    ));
+                    logService.createLog(llmPromptRequest.getText(), "ไม่สามารถประมวลผลคำขอได้ครับ :(", allIntents);
+                    return ResponseEntity.status(HttpStatus.OK).body(finalResponse);
+                }
                 for(DecoratedItem item : response.decoratedInput().decorated()) {
                     System.out.println(item);
                     allIntents.addAll(item.intent());

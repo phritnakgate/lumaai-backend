@@ -37,8 +37,15 @@ public class LLMService {
     }
 
     public Map<String, List<Map<String, Object>>> processIntent() {
-        for (String intent : decoratedItem.intent()) {
-            doIntent(intent);
+        if (decoratedItem.intent().isEmpty()){
+            serviceResponse.get("errors").add(Map.of(
+                    "intent", "UNKNOWN",
+                    "message", "ไม่สามารถประมวลผลคำขอได้ครับ :("
+            ));
+        }else{
+            for (String intent : decoratedItem.intent()) {
+                doIntent(intent);
+            }
         }
         return serviceResponse;
     }
@@ -85,6 +92,7 @@ public class LLMService {
                         "intent", "EXIT",
                         "message", "ออกจากโหมดเดิมแล้วครับ :D"
                 ));
+                break;
             default:
                 serviceResponse.get("errors").add(Map.of(
                         "intent", "UNKNOWN",
