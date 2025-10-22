@@ -356,6 +356,10 @@ public class GoogleCalendarService {
                 .getReference("users")
                 .child(userId)
                 .child("googleRefreshToken");
+        DatabaseReference bindEmailRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(userId)
+                .child("googleCalendarEmail");
 
 
         tokenRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -364,7 +368,7 @@ public class GoogleCalendarService {
                 if (snapshot.exists() && snapshot.getValue() != null) {
                     String refreshToken = snapshot.getValue(String.class);
                     if (refreshToken == null || refreshToken.isEmpty()) {
-                        future.completeExceptionally(new Exception("refresh token ว่าง"));
+                        future.completeExceptionally(new Exception("Refresh Token is empty"));
                         return;
                     }
 
@@ -372,7 +376,14 @@ public class GoogleCalendarService {
                     revokeGoogleToken(refreshToken)
                             .thenRun(() -> tokenRef.removeValue((databaseError, databaseReference) -> {
                                 if (databaseError == null) {
-                                    future.complete(null);
+                                    bindEmailRef.removeValue((de, dr) -> {
+                                        if(de == null) {
+                                            future.complete(null);
+                                        }else{
+                                            future.completeExceptionally(de.toException());
+                                        }
+                                    });
+
                                 } else {
                                     future.completeExceptionally(databaseError.toException());
                                 }
@@ -384,7 +395,7 @@ public class GoogleCalendarService {
                             });
 
                 } else {
-                    future.completeExceptionally(new Exception("ไม่พบ refresh token ใน Firebase"));
+                    future.completeExceptionally(new Exception("RefreshToken not found in Firebase"));
                 }
             }
 
