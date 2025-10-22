@@ -53,6 +53,7 @@ public class GoogleCalendarService {
 
     private final NetHttpTransport httpTransport = new NetHttpTransport();
     private final GsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+    private final ZoneId zoneId = ZoneId.of("GMT+7");
 
     private String getCurrentUserId() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -197,7 +198,7 @@ public class GoogleCalendarService {
                 Event googleEvent = googleEventMap.get(eventId);
                 DataSnapshot firebaseTaskSnapshot = firebaseTasks.get(eventId);
                 if (isEventModified(googleEvent, firebaseTaskSnapshot)) {
-                    UpdateTaskRequest updatedTask = convertEventToUpdateTaskRequest(googleEvent);
+                    UpdateTaskRequest updatedTask = convertEventToUpdateTaskRequest(googleEvent, firebaseTaskSnapshot);
                     taskService.updateTask(eventId, updatedTask, userId);
                     updated.getAndIncrement();
                 }
@@ -255,7 +256,7 @@ public class GoogleCalendarService {
 
         EventDateTime start = event.getStart();
         if (start.getDateTime() != null) { // Event ปกติ
-            ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start.getDateTime().getValue()), ZoneId.of("GMT+7"));
+            ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start.getDateTime().getValue()), zoneId);
             request.setDueDate(zdt.toLocalDate().toString());
             request.setDueTime(zdt.toLocalTime().toString());
         } else { // All-day Event
@@ -279,21 +280,38 @@ public class GoogleCalendarService {
         return request;
     }
 
-    private UpdateTaskRequest convertEventToUpdateTaskRequest(Event event) {
+    private UpdateTaskRequest convertEventToUpdateTaskRequest(Event event, DataSnapshot firebaseTask) {
         UpdateTaskRequest request = new UpdateTaskRequest();
         request.setName(event.getSummary());
         request.setDescription(event.getDescription());
 
-        EventDateTime start = event.getStart();
-        if (start.getDateTime() != null) {
-            ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start.getDateTime().getValue()), ZoneId.of("GMT+7"));
-            request.setDateTime(zdt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
-        } else { // All-day event
-            LocalDate date = LocalDate.parse(start.getDate().toStringRfc3339());
-            ZonedDateTime zdt = date.atStartOfDay(ZoneId.of("GMT+7"));
-            request.setDateTime(zdt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+        String firebaseDateTimeStr = firebaseTask.child("dateTime").getValue(String.class);
+        ZonedDateTime originalFirebaseZdt = null;
+        if (firebaseDateTimeStr != null) {
+            originalFirebaseZdt = ZonedDateTime.parse(firebaseDateTimeStr);
         }
+        LocalDate newGoogleDate;
+        EventDateTime start = event.getStart();
 
+        if (start.getDateTime() != null) {
+            ZonedDateTime googleZdt = ZonedDateTime.ofInstant(
+                    Instant.ofEpochMilli(start.getDateTime().getValue()),
+                    zoneId
+            );
+            newGoogleDate = googleZdt.toLocalDate();
+        } else {
+            newGoogleDate = LocalDate.parse(start.getDate().toStringRfc3339());
+        }
+        ZonedDateTime finalZdt;
+        if (originalFirebaseZdt != null) {
+            finalZdt = originalFirebaseZdt
+                    .withYear(newGoogleDate.getYear())
+                    .withMonth(newGoogleDate.getMonthValue())
+                    .withDayOfMonth(newGoogleDate.getDayOfMonth());
+        } else {
+            finalZdt = newGoogleDate.atStartOfDay(zoneId);
+        }
+        request.setDateTime(finalZdt.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
         return request;
     }
 
@@ -309,21 +327,25 @@ public class GoogleCalendarService {
         String firebaseDateTimeStr = firebaseTask.child("dateTime").getValue(String.class);
         if (firebaseDateTimeStr == null) return true;
 
-        ZonedDateTime firebaseZdt = ZonedDateTime.parse(firebaseDateTimeStr);
-
+        LocalDate firebaseDate = ZonedDateTime.parse(firebaseDateTimeStr).toLocalDate();
+        LocalDate googleDate;
         EventDateTime start = googleEvent.getStart();
+
         if (start.getDateTime() != null) {
-            ZonedDateTime googleZdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(start.getDateTime().getValue()), ZoneId.systemDefault());
-            return !firebaseZdt.toInstant().equals(googleZdt.toInstant());
-        } else { // All-day event
-            LocalDate googleDate = LocalDate.parse(start.getDate().toStringRfc3339());
-            return !firebaseZdt.toLocalDate().equals(googleDate);
+            ZonedDateTime googleZdt = ZonedDateTime.ofInstant(
+                    Instant.ofEpochMilli(start.getDateTime().getValue()),
+                    zoneId
+            );
+            googleDate = googleZdt.toLocalDate();
+        } else {
+            googleDate = LocalDate.parse(start.getDate().toStringRfc3339());
         }
+        return !firebaseDate.equals(googleDate);
     }
 
-    public CompletableFuture<Void> revokeGoogleCalendar() {
+    public void revokeGoogleCalendar() {
         String userId = getCurrentUserId();
-        return deleteGoogleRefreshTokenAsync(userId).thenCompose(v ->
+        deleteGoogleRefreshTokenAsync(userId).thenCompose(v ->
                 deleteGoogleCalendarTasksAsync(userId)
         );
     }
@@ -348,15 +370,13 @@ public class GoogleCalendarService {
 
                     // revoke ก่อน แล้วค่อยลบจาก Firebase
                     revokeGoogleToken(refreshToken)
-                            .thenRun(() -> {
-                                tokenRef.removeValue((databaseError, databaseReference) -> {
-                                    if (databaseError == null) {
-                                        future.complete(null);
-                                    } else {
-                                        future.completeExceptionally(databaseError.toException());
-                                    }
-                                });
-                            })
+                            .thenRun(() -> tokenRef.removeValue((databaseError, databaseReference) -> {
+                                if (databaseError == null) {
+                                    future.complete(null);
+                                } else {
+                                    future.completeExceptionally(databaseError.toException());
+                                }
+                            }))
                             .exceptionally(ex -> {
                                 // ถ้า revoke fail ก็ส่ง exception กลับ
                                 future.completeExceptionally(ex);
