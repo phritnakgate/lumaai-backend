@@ -69,10 +69,10 @@ public class LLMController {
             if (response.decoratedInput() != null) {
                 if(response.decoratedInput().decorated().isEmpty()){
                     finalResponse.put("result", "ไม่สามารถประมวลผลคำขอได้ครับ :(");
-                    finalResponse.put("errors", Map.of(
+                    finalResponse.put("errors", List.of(Map.of(
                             "intent", "UNKNOWN",
                             "message", "ไม่สามารถประมวลผลคำขอได้ครับ :("
-                    ));
+                    )));
                     logService.createLog(llmPromptRequest.getText(), "ไม่สามารถประมวลผลคำขอได้ครับ :(", allIntents);
                     return ResponseEntity.status(HttpStatus.OK).body(finalResponse);
                 }
