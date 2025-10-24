@@ -23,8 +23,13 @@ public class GoogleCalendarController {
     @PostMapping("/auth")
     public ResponseEntity<?> connect(@RequestBody ConnectCalendarRequest connectCalendarRequest) {
         try{
-            googleCalendarService.exchangeCodeAndStoreRefreshToken(connectCalendarRequest.getAuthCode(), connectCalendarRequest.getEmail());
-            return ResponseEntity.ok().body(Map.of("result","Successfully connected Google Calendar."));
+            boolean result = googleCalendarService.exchangeCodeAndStoreRefreshToken(connectCalendarRequest.getAuthCode(), connectCalendarRequest.getEmail());
+            if(result){
+                return ResponseEntity.ok().body(Map.of("result","Successfully connected Google Calendar."));
+            }else{
+                return ResponseEntity.badRequest().body(Map.of("error","Failed to connect Google Calendar, the email has been used."));
+            }
+
         }catch (GoogleJsonResponseException e) {
             System.err.println("Google API Error: " + e.getDetails());
             return ResponseEntity.badRequest().body(Map.of("error", e.getDetails()));

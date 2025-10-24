@@ -59,7 +59,7 @@ public class GoogleCalendarService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    public void exchangeCodeAndStoreRefreshToken(String authCode, String email) throws IOException, GeneralSecurityException {
+    public boolean exchangeCodeAndStoreRefreshToken(String authCode, String email) throws IOException, GeneralSecurityException {
         String userId = getCurrentUserId();
         GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
                 httpTransport, jsonFactory, clientId, clientSecret, authCode, "https://developers.google.com/oauthplayground"
@@ -86,6 +86,10 @@ public class GoogleCalendarService {
             userRef.child("googleRefreshToken").setValueAsync(refreshToken);
             userRef.child("googleCalendarEmail").setValueAsync(verifiedEmail);
             System.out.println("Stored Refresh Token for user: " + userId);
+            return true;
+        }else{
+            System.out.println("Refresh Token is null for user: " + userId);
+            return false;
         }
     }
 
