@@ -122,4 +122,14 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Failed to revoke token: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequest passwordResetRequest) {
+        try {
+            authService.forgetPassword(passwordResetRequest.getEmail());
+            return ResponseEntity.ok(Map.of("result", "Password reset email sent successfully!"));
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to Reset Password: " + e.getMessage()));
+        }
+    }
 }

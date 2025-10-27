@@ -23,6 +23,8 @@ public class FirebaseLocalConfig {
             System.setProperty("vertex-ai.api-key", Objects.requireNonNull(dotenv.get("VERTEX_AI_API_KEY")));
             System.setProperty("google.client-id", Objects.requireNonNull(dotenv.get("GOOGLE_CLIENT_ID")));
             System.setProperty("google.client-secret", Objects.requireNonNull(dotenv.get("GOOGLE_CLIENT_SECRET")));
+            System.setProperty("spring.mail.username", Objects.requireNonNull(dotenv.get("SPRING_MAIL_USERNAME")));
+            System.setProperty("spring.mail.password", Objects.requireNonNull(dotenv.get("SPRING_MAIL_PASSWORD")));
             System.out.println("✅ .env loaded");
         } catch (Exception e) {
             System.err.println("Could not load .env");

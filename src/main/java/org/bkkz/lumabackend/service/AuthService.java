@@ -13,6 +13,8 @@ import org.bkkz.lumabackend.model.authentication.Register;
 import org.bkkz.lumabackend.security.JwtUtil;
 import org.bkkz.lumabackend.security.PkceUtil;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -35,10 +37,12 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     private final Map<String, PkceDetails> authCodes = new ConcurrentHashMap<>();
+    private final JavaMailSender mailSender;
 
-    public AuthService(JwtUtil jwtUtil, ObjectMapper objectMapper) {
+    public AuthService(JwtUtil jwtUtil, ObjectMapper objectMapper, JavaMailSender mailSender) {
         this.jwtUtil = jwtUtil;
         this.objectMapper = objectMapper;
+        this.mailSender = mailSender;
     }
 
     HttpClient client = HttpClient.newHttpClient();
@@ -185,5 +189,25 @@ public class AuthService {
 
     public void logout(String uid) throws FirebaseAuthException {
         FirebaseAuth.getInstance().revokeRefreshTokens(uid);
+    }
+
+    public void forgetPassword(String email) throws Exception {
+        String link = FirebaseAuth.getInstance().generatePasswordResetLink(email);
+        System.out.println("Password reset link: " + link);
+        if(link == null || link.isEmpty()){
+            throw new RuntimeException("Generate password reset link failed.");
+        }else{
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(email);
+            message.setSubject("LUMA AI | Password Reset Request");
+            message.setText("Dear User,\n\n" +
+                    "We received a request to reset your password. Please click the link below to set a new password:\n\n" +
+                    link + "\n\n" +
+                    "If you did not request a password reset, please ignore this email.\n\n" +
+                    "Best regards,\n" +
+                    "LUMA AI Team");
+            mailSender.send(message);
+        }
+
     }
 }
