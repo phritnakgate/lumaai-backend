@@ -600,8 +600,8 @@ public class GoogleCalendarService {
         newTask.setDescription(calendarEventRequest.getDescription());
         newTask.setDueDate(calendarEventRequest.getStartTime());
         newTask.setDueTime("");
-        newTask.setCategory(4);
-        newTask.setPriority(0);
+        newTask.setCategory(calendarEventRequest.getAppCategory() != null ? calendarEventRequest.getAppCategory() : 4);
+        newTask.setPriority(calendarEventRequest.getAppPriority() != null ? calendarEventRequest.getAppPriority() : 0);
         return newTask;
     }
 }
