@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeToken
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.DateTime;
@@ -80,8 +81,21 @@ public class GoogleCalendarService {
             verifiedEmail = payload.getEmail();
         }
 
-
         if (refreshToken != null) {
+            try{
+                UserCredentials credentials = UserCredentials.newBuilder()
+                        .setClientId(clientId)
+                        .setClientSecret(clientSecret)
+                        .setRefreshToken(refreshToken)
+                        .build();
+
+                Calendar c = new Calendar.Builder(httpTransport, jsonFactory, new HttpCredentialsAdapter(credentials))
+                        .setApplicationName("LumaApp")
+                        .build();
+                c.calendarList().list().setMaxResults(1).execute();
+            }catch(GoogleJsonResponseException e){
+                return false;
+            }
             DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(userId);
             userRef.child("googleRefreshToken").setValueAsync(refreshToken);
             userRef.child("googleCalendarEmail").setValueAsync(verifiedEmail);

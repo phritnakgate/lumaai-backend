@@ -27,7 +27,7 @@ public class GoogleCalendarController {
             if(result){
                 return ResponseEntity.ok().body(Map.of("result","Successfully connected Google Calendar."));
             }else{
-                return ResponseEntity.badRequest().body(Map.of("error","Failed to connect Google Calendar, the email has been used."));
+                return ResponseEntity.badRequest().body(Map.of("error","Failed to connect Google Calendar, the email has been used or user denied consent."));
             }
 
         }catch (GoogleJsonResponseException e) {
