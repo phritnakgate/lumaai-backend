@@ -552,17 +552,39 @@ public class GoogleCalendarService {
                             .build();
                     String calendarId = "primary";
                     try {
+                        System.out.println("Request to update event with ID: " + eventId + " with data" + calendarEventRequest.getName() + ", SD" + calendarEventRequest.getStartTime()+ ", ED" + calendarEventRequest.getEndTime());
                         Event event = c.events().get(calendarId, eventId).execute();
                         event.setSummary(calendarEventRequest.getName());
                         event.setDescription(calendarEventRequest.getDescription());
-                        EventDateTime start = new EventDateTime()
-                                .setDate(new DateTime(calendarEventRequest.getStartTime()));
-                        event.setStart(start);
-                        EventDateTime end = new EventDateTime()
-                                .setDate(new DateTime(calendarEventRequest.getEndTime()));
-                        event.setEnd(end);
+                        //Check all-day event
+                        if(event.getStart().getDate() != null && event.getStart().getDateTime() == null){
+                            EventDateTime start = new EventDateTime()
+                                    .setDate(new DateTime(calendarEventRequest.getStartTime()));
+                            event.setStart(start);
+                            EventDateTime end = new EventDateTime()
+                                    .setDate(new DateTime(calendarEventRequest.getEndTime()));
+                            event.setEnd(end);
+                        }else{
+                            ZonedDateTime oldStartZoned = ZonedDateTime.parse(event.getStart().getDateTime().toStringRfc3339());
+                            ZonedDateTime oldEndZoned = ZonedDateTime.parse(event.getEnd().getDateTime().toStringRfc3339());
+                            Duration timedDuration = Duration.between(oldStartZoned, oldEndZoned);
+                            if (timedDuration.isZero() || timedDuration.isNegative()) {
+                                timedDuration = Duration.ofHours(1);
+                            }
 
+                            LocalDate newStartDate = LocalDate.parse(calendarEventRequest.getStartTime());
+                            LocalTime newStartTime = LocalTime.parse(calendarEventRequest.getAppTaskTime());
+                            ZonedDateTime newStartZoned = newStartDate.atTime(newStartTime).atZone(zoneId);
+                            ZonedDateTime newEndZoned = newStartZoned.plus(timedDuration);
+                            EventDateTime start = new EventDateTime()
+                                    .setDateTime(new DateTime(newStartZoned.toInstant().toEpochMilli()));
+                            event.setStart(start);
+                            EventDateTime end = new EventDateTime()
+                                    .setDateTime(new DateTime(newEndZoned.toInstant().toEpochMilli()));
+                            event.setEnd(end);
+                        }
                         c.events().patch(calendarId, eventId, event).execute();
+
                         UpdateTaskRequest updateTaskRequest = new UpdateTaskRequest();
                         updateTaskRequest.setName(calendarEventRequest.getName());
                         updateTaskRequest.setDescription(calendarEventRequest.getDescription());
@@ -576,6 +598,7 @@ public class GoogleCalendarService {
                         taskService.updateTask(eventId, updateTaskRequest, userId);
                         return future.complete(null);
                     } catch (Exception e) {
+                        System.out.println(e.getMessage());
                         return future.completeExceptionally(e);
                     }
                 }
@@ -601,6 +624,7 @@ public class GoogleCalendarService {
                         taskService.deleteTask(eventId, userId);
                         return future.complete(null);
                     } catch (Exception e) {
+                        System.out.println(e.getMessage());
                         return future.completeExceptionally(e);
                     }
                 }
