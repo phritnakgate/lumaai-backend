@@ -70,28 +70,24 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 2. สร้าง Bean เพื่อกำหนดค่าของ CORS policy
+    //CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // **สำคัญมาก: กำหนด Origin ของ Frontend ที่จะอนุญาต**
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:5173" // สำหรับ Vue ตอนพัฒนา
+                "http://localhost:5173",
+                "http://localhost:5174"
                 //, "https://your-frontend-domain.com" // **อย่าลืมเพิ่ม Domain จริงตอนใช้งาน**
         ));
 
-        // กำหนด HTTP Methods ที่อนุญาต (ต้องมี OPTIONS)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
 
-        // กำหนด HTTP Headers ที่อนุญาต
         configuration.setAllowedHeaders(List.of("*"));
 
-        // อนุญาตให้ส่ง Credentials (เช่น cookies, authorization headers)
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // ใช้การตั้งค่านี้กับทุก path ใน API ของเรา
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
